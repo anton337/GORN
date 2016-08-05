@@ -1,0 +1,11 @@
+<config>
+    <node>
+        <url host='localhost' port='32003' />
+    </node>
+    <links>
+        <link>
+            <url host='localhost' port='32000' />
+            <url host='localhost' port='32001' />
+        </link>
+    </links>
+</config>
