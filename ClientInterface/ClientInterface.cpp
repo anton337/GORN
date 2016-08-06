@@ -1,9 +1,17 @@
+#include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <vector>
+#include "multithreading/semaphore.h"
+#include "asio/network.h"
+#include "info.h"
 
-void read_file ( std::string file_name , bool quiet = true )
+void read_file ( std::string file_name 
+               , std::stringstream * output_ss 
+               )
 {
     std::string line;
     std::string token;
@@ -18,16 +26,11 @@ void read_file ( std::string file_name , bool quiet = true )
             ss << line;
             while ( ss >> token )
             {
-                if ( !quiet && num_print < 1000 )
                 {
                     num_print++;
-                    std::cout << token << ",";
+                    *output_ss << token << " ";
                 }
             }
-        }
-        if ( !quiet )
-        {
-            std::cout << std::endl;
         }
         myfile . close ();
     }
@@ -35,6 +38,26 @@ void read_file ( std::string file_name , bool quiet = true )
     {
         std::cout << "Unable to open file : " << file_name << std::endl;
     }
+}
+
+void ping_thread ( std::string host , std::size_t port ) 
+{
+    boost::asio::io_service svc;
+    Client client(svc, host, std::to_string(port));
+
+    client.send("Requesting Ping ... \n");
+}
+
+void push_data_thread ( std::string host , std::size_t port , std::stringstream * ss ) 
+{
+    boost::asio::io_service svc;
+    Client client(svc, host, std::to_string(port));
+    std::string line;
+    while ( *ss >> line )
+    {
+        client.send(line+"\n");
+    }
+    delete ss;
 }
 
 int main(int argc,char * argv[])
@@ -47,6 +70,18 @@ int main(int argc,char * argv[])
         return 1;
     }
     config_file = std::string(argv[1]);
+
+    host_info host;
+    std::vector < connection_info > connections;
+    parse_config_file ( config_file 
+                      , host 
+                      , connections 
+                      );
+
+    std::cout << "port no : " << host . port_no << std::endl;
+
+
+
     std::string line;
     while(1)
     {
@@ -57,20 +92,35 @@ int main(int argc,char * argv[])
         ss << line;
         std::string command;
         ss >> command;
-        if ( command == "load-quiet" )
-        {
-            std::string file_name;
-            ss >> file_name;
-            std::cout << "Loading " << file_name << " ... " << std::endl;
-            read_file ( file_name );
-            std::cout << "Done ... " << std::endl;
-        }
         if ( command == "load" )
         {
             std::string file_name;
             ss >> file_name;
             std::cout << "Loading " << file_name << " ... " << std::endl;
-            read_file ( file_name , false );
+            std::stringstream ss;
+            read_file ( file_name , &ss );
+            std::cout << ss << std::endl;
+            std::cout << "Done ... " << std::endl;
+        }
+        if ( command == "ping" )
+        {
+            boost::thread t ( ping_thread
+                            , host.host_name
+                            , host.port_no
+                            );
+        }
+        if ( command == "push" )
+        {
+            std::string file_name;
+            ss >> file_name;
+            std::cout << "Pushing " << file_name << " ... " << std::endl;
+            std::stringstream * ss = new std::stringstream();
+            read_file ( file_name , ss );
+            boost::thread t ( push_data_thread
+                            , host.host_name
+                            , host.port_no
+                            , ss
+                            );
             std::cout << "Done ... " << std::endl;
         }
     }

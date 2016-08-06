@@ -1,0 +1,39 @@
+make clean;
+make[1]: Entering directory '/home/pi/GORN_git/GORN/HashTableDaemon'
+rm -rf HashTableDaemon
+make[1]: Leaving directory '/home/pi/GORN_git/GORN/HashTableDaemon'
+g++ -std=c++11 HashTableDaemon.cpp -o HashTableDaemon -lboost_thread -lboost_system -lpthread;
+./script.sh 32000
+/home/pi/GORN_git/GORN/HashTableDaemon
+0
+1
+2
+3
+Welcome to HashTableDaemon!
+Welcome to HashTableDaemon!
+Welcome to HashTableDaemon!
+Welcome to HashTableDaemon!
+port no : 33003
+port no : 33000
+port no : 33001
+port no : 33002
+join
+received: 'hello world
+bye world
+'
+status: End of file
+join
+received: 'hello world
+bye world
+'
+status: End of file
+join
+received: 'hello world
+bye world
+'
+status: End of file
+received: 'hello world
+bye world
+'
+status: End of file
+join

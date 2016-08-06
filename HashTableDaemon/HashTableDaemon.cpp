@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <deque>
-#include "multithreading/semaphore.h"
+#include "multithreading/producer_consumer_queue.h"
 #include "asio/network.h"
 #include "info.h"
 
@@ -12,13 +12,9 @@ void wait(int seconds)
     sleep(seconds);//boost::this_thread::sleep_for(boost::chrono::seconds{seconds});
 }
 
-#define BUFFER_SIZE 10
+#define BUFFER_SIZE 10000
 
-semaphore * emptyCount = new semaphore(BUFFER_SIZE);
-
-semaphore * fillCount = new semaphore(0);
-
-boost::mutex _mutex;
+std::vector < connection_info > connections;
 
 struct Chunk
 {
@@ -30,44 +26,35 @@ struct Chunk
     }
 };
 
-std::deque < Chunk * > data;
+ProducerConsumerQueue < Chunk > * Queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
 
-Chunk * produceItem()
-{
-    std::stringstream ss;
-    ss << "message " << rand() << std::endl;
-    return new Chunk( ss.str() );
-}
+ProducerConsumerQueue < Chunk > * * sorting_queue;
+
+std::size_t num_sorting_queue = -1;
+
+std::size_t node_index = -1;
 
 void consumeItem ( Chunk * item )
 {
-    std::cout << item -> message << std::endl;
-    delete item;
-}
-
-void putItemIntoBuffer ( Chunk * item )
-{
-    data . push_back ( item );
-}
-
-Chunk * removeItemFromBuffer ()
-{
-    Chunk * item = data . front ();
-    data . pop_front ();
-    return item;
-}
-
-void producer_thread()
-{
-    while(1)
+    std::cout << "consumeItem" << std::endl;
+    if ( item != NULL )
     {
-        Chunk * item = produceItem();
-        emptyCount -> wait ();
+        std::size_t k = atoi ( item -> message . c_str () );
+        std::size_t index = k % num_sorting_queue;
+        std::cout << "p1" << std::endl;
+        if ( index != node_index )
         {
-            boost::unique_lock<boost::mutex> lock(_mutex);
-            putItemIntoBuffer(item);
+        std::cout << "p2" << std::endl;
+            (sorting_queue [index]) -> put ( item );
+        std::cout << "p3" << std::endl;
         }
-        fillCount -> signal ();
+        else
+        {
+        std::cout << "p4" << std::endl;
+            std::cout << item -> message << std::endl;
+            delete item;
+        std::cout << "p5" << std::endl;
+        }
     }
 }
 
@@ -75,65 +62,41 @@ void consumer_thread()
 {
     while(1)
     {
-        fillCount -> wait ();
-        Chunk * item = NULL;
+        std::cout << "consumer thread" << std::endl;
+        Chunk * item = (Queue) -> get();
+        if ( item == NULL )
         {
-            boost::unique_lock<boost::mutex> lock(_mutex);
-            item = removeItemFromBuffer();
+            std::cout << "item is NULL ... " << std::endl;
+            continue;
         }
-        emptyCount -> signal ();
+        std::cout << "SUCCESS : " << item -> message << std::endl;
         consumeItem(item);
     }
 }
 
-void parse_config_file ( std::string file_name , host_info & host , std::vector < connection_info > & connections )
+void redirection_thread ( std::string host , std::size_t port ) 
 {
-    std::string line;
-    std::string token;
-    std::ifstream myfile ( file_name.c_str() );
-    bool get_host = false;
-    std::string host_name;
-    std::size_t port_no;
-    if ( myfile . is_open () )
+    std::cout << "redirection ... " << std::endl;
+    boost::asio::io_service svc;
+    Client client(svc, host, std::to_string(port));
+    client.send("hello world\n");
+    // client.send("bye world\n");
+}
+
+void consumer_redirection_thread(int queue_index)
+{
+    std::vector < std::string > Q;
+    while(1)
     {
-        while ( getline ( myfile , line ) )
+        Chunk * item = ((sorting_queue [queue_index])) -> get ();
+        Q . push_back ( item -> message );
+        if ( Q . size () > 100 )
         {
-            std::stringstream ss;
-            ss << line;
-            ss >> token;
-            if ( token . find ( "url" ) != std::string::npos )
-            {
-                while ( ss >> token )
-                {
-                    if ( token . find ( "host" ) != std::string::npos )
-                    {
-                        std::size_t start_id = token . find ( "\'" );
-                        std::size_t end_id = token . find ( "\'" , start_id+1 );
-                        host_name = token.substr(start_id+1,end_id-start_id-1);
-                    }
-                    if ( token . find ( "port" ) != std::string::npos )
-                    {
-                        std::size_t start_id = token . find ( "\'" );
-                        std::size_t end_id = token . find ( "\'" , start_id+1 );
-                        port_no = (std::size_t)atoi(token.substr(start_id+1,end_id-start_id-1).c_str());
-                    }
-                }
-                if ( !get_host )
-                {
-                    get_host = true;
-                    host = host_info ( host_name , port_no );
-                }
-                else
-                {
-                    connections . push_back ( connection_info ( host_name , port_no ) );
-                }
-            }
+            boost::thread redirection ( redirection_thread
+                                      , connections[queue_index].host_name
+                                      , connections[queue_index].port_no
+                                      );
         }
-        myfile . close ();
-    }
-    else
-    {
-        std::cout << "Unable to open file : " << file_name << std::endl;
     }
 }
 
@@ -164,45 +127,48 @@ int main(int argc,char * argv[])
     }
     signal(SIGINT,sigint);
     config_file = std::string(argv[1]);
-    // std::string line;
-    // std::size_t n_threads = 8;
-    // std::vector < boost::thread * > threads;
-    // for ( std::size_t k(0)
-    //     ; k < n_threads
-    //     ; ++k
-    //     )
-    // {
-    //     threads . push_back ( new boost::thread { producer_thread } );
-    // }
-    // std::vector < boost::thread * > consumer_threads;
-    // for ( std::size_t k(0)
-    //     ; k < n_threads
-    //     ; ++k
-    //     )
-    // {
-    //     threads . push_back ( new boost::thread { consumer_thread } );
-    // }
-    // for ( std::size_t k(0)
-    //     ; k < threads.size()
-    //     ; ++k
-    //     )
-    // {
-    //     threads[k] -> join ();
-    // }
+    std::size_t n_threads = 1;
+    std::vector < boost::thread * > threads;
+
+    for ( std::size_t k(0)
+        ; k < n_threads
+        ; ++k
+        )
+    {
+        threads . push_back ( new boost::thread { consumer_thread } );
+    }
 
     host_info host;
-    std::vector < connection_info > connections;
     parse_config_file ( config_file 
                       , host 
                       , connections 
                       );
 
+
+    sorting_queue = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
+    num_sorting_queue = connections . size ();
+    for ( std::size_t k(0)
+        ; k < connections.size()
+        ; ++k
+        )
+    {
+        sorting_queue[k] =  ( new ProducerConsumerQueue < Chunk > ( BUFFER_SIZE ) );
+        threads . push_back ( new boost::thread ( consumer_redirection_thread
+                                                , k
+                                                )
+                            );
+    }
+
+    node_index = host . port_no % 10;
+
     std::cout << "port no : " << host . port_no << std::endl;
-    Server * server = new Server ( host . port_no );
+    Server < Chunk , ProducerConsumerQueue < Chunk > > * server 
+        = new Server < Chunk , ProducerConsumerQueue < Chunk > > ( Queue 
+                                                                 , host . port_no 
+                                                                 );
 
     sleep(1);//boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 
-    std::vector < boost::thread * > threads;
     for ( std::size_t k(0)
         ; k < connections.size()
         ; ++k
@@ -215,6 +181,7 @@ int main(int argc,char * argv[])
                             );
     }
 
+    std::cout << "join" << std::endl;
     for ( std::size_t k(0)
         ; k < threads.size()
         ; ++k
