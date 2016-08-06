@@ -32,7 +32,13 @@ void server_thread ( const int PORT = 52275 )
         try
         {
             boost::asio::io_service io_service;
-            boost::asio::ip::tcp::acceptor acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), PORT));
+            boost::asio::ip::tcp::acceptor acceptor(io_service);
+            boost::asio::ip::tcp::endpoint ep(boost::asio::ip::tcp::v4(), PORT);
+            acceptor.open(ep.protocol());
+            boost::asio::socket_base::reuse_address option(true);
+            acceptor.set_option(option);
+            acceptor.bind(ep);
+            acceptor.listen();
 
             {
                 boost::asio::ip::tcp::socket socket(io_service);
@@ -53,6 +59,7 @@ void server_thread ( const int PORT = 52275 )
         catch (std::exception& e)
         {
             std::cerr << "Exception: " << e.what() << " : " << PORT << std::endl;
+            exit(1);
         }
     }
 }

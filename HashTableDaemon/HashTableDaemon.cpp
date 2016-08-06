@@ -9,7 +9,7 @@
 
 void wait(int seconds)
 {
-    boost::this_thread::sleep_for(boost::chrono::seconds{seconds});
+    sleep(seconds);//boost::this_thread::sleep_for(boost::chrono::seconds{seconds});
 }
 
 #define BUFFER_SIZE 10
@@ -146,6 +146,12 @@ void client_thread ( std::string host , std::size_t port )
     client.send("bye world\n");
 }
 
+void sigint(int a)
+{
+    std::cout << "^C caught!" << std::endl;
+    exit(1);
+}
+
 int main(int argc,char * argv[])
 {
     srand(time(NULL));
@@ -156,6 +162,7 @@ int main(int argc,char * argv[])
         std::cout << "try ./HashTableDaemon <config_file>" << std::endl;
         return 1;
     }
+    signal(SIGINT,sigint);
     config_file = std::string(argv[1]);
     // std::string line;
     // std::size_t n_threads = 8;
@@ -193,7 +200,7 @@ int main(int argc,char * argv[])
     std::cout << "port no : " << host . port_no << std::endl;
     Server * server = new Server ( host . port_no );
 
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+    sleep(1);//boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 
     std::vector < boost::thread * > threads;
     for ( std::size_t k(0)

@@ -3,7 +3,7 @@
 
 int main(int argc,char * argv[])
 {
-    std::cout << "Welcome to DataGenerator!" << std::endl;
+    std::cerr << "Welcome to DataGenerator!" << std::endl;
     std::size_t num_per_iteration ( -1 );
     std::size_t num_iterations ( -1 );
     if ( argc != 3 )

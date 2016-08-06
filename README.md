@@ -1,1 +1,1 @@
-# GORN
+# GORN  GORN - is a distributed Hash Map. The system uses the Map-Reduce methodology. The mappers split the input data based by performing a distributed merge sort on the hash key prefixes. Reducers perform low level sorts on mapper output, and store the sorted key-value pairs into distributed bins. To ensure that the system is scalable, the Chord network topology is used to connect the network. 
