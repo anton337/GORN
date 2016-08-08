@@ -96,6 +96,7 @@ void consumer_redirection_thread(int queue_index)
                                       , connections[queue_index].host_name
                                       , connections[queue_index].port_no
                                       );
+            Q . clear ();
         }
     }
 }
@@ -189,8 +190,6 @@ int main(int argc,char * argv[])
     {
         threads[k] -> join ();
     }
-
-    server -> join ();
 
     return 0;
 }
