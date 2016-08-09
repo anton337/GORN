@@ -55,7 +55,7 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
     std::string line;
     while ( *ss >> line )
     {
-        client.send(line+"\n");
+        client.send(line+" ");
     }
     delete ss;
 }

@@ -11,35 +11,23 @@ class ProducerConsumerQueue
 
     void put ( T * item )
     {
-        std::cout << "<<" << std::endl;
         emptyCount -> wait ();
         {
             boost::unique_lock<boost::mutex> lock(*_mutex);
             data . push_back ( item );
-            std::cout << "elem=" << item->message << "   size=" << data . size () << std::endl;
         }
         fillCount -> signal ();
     }
 
     T * get ()
     {
-        std::cout << ">>" << std::endl;
         T * item = NULL;
         fillCount -> wait ();
         {
             boost::unique_lock<boost::mutex> lock(*_mutex);
-            std::cout << ">>size:" << data . size () << std::endl;
             if ( !data . empty () )
             {
                 item = data . front ();
-                if ( item )
-                {
-                    std::cout << ">>message:" << item -> message << std::endl;
-                }
-                else
-                {
-                    std::cout << ">>NULL" << std::endl;
-                }
                 data . pop_front ();
             }
         }
@@ -48,7 +36,6 @@ class ProducerConsumerQueue
         {
             std::cout << "item is NULL" << std::endl;
         }
-        std::cout << ">>Done!" << std::endl;
         return item;
     }
 

@@ -247,16 +247,12 @@ struct Client
         try
         {
             using namespace std; // For strlen.
-            std::cout << "Sending : " << message << std::endl;
             const char * request = message . c_str ();
             size_t request_length = strlen(request);
             boost::asio::write(socket, boost::asio::buffer(request, request_length));
 
             char reply[max_length];
             size_t reply_length = boost::asio::read(socket,boost::asio::buffer(reply, request_length));
-            std::cout << "Reply is: ";
-            std::cout.write(reply, reply_length);
-            std::cout << "\n";
         
             // socket.send(boost::asio::buffer(message));
         }

@@ -34,26 +34,22 @@ std::size_t num_sorting_queue = -1;
 
 std::size_t node_index = -1;
 
+std::size_t num_received = 0;
+
 void consumeItem ( Chunk * item )
 {
-    std::cout << "consumeItem" << std::endl;
     if ( item != NULL )
     {
         std::size_t k = atoi ( item -> message . c_str () );
         std::size_t index = k % num_sorting_queue;
-        std::cout << "p1" << std::endl;
         if ( index != node_index )
         {
-        std::cout << "p2" << std::endl;
             (sorting_queue [index]) -> put ( item );
-        std::cout << "p3" << std::endl;
         }
         else
         {
-        std::cout << "p4" << std::endl;
-            std::cout << item -> message << std::endl;
+            std::cout << ++num_received <<  " : " << item -> message << std::endl;
             delete item;
-        std::cout << "p5" << std::endl;
         }
     }
 }
@@ -62,25 +58,32 @@ void consumer_thread()
 {
     while(1)
     {
-        std::cout << "consumer thread" << std::endl;
         Chunk * item = (Queue) -> get();
         if ( item == NULL )
         {
             std::cout << "item is NULL ... " << std::endl;
             continue;
         }
-        std::cout << "SUCCESS : " << item -> message << std::endl;
         consumeItem(item);
     }
 }
 
-void redirection_thread ( std::string host , std::size_t port ) 
+void redirection_thread ( std::string host , std::size_t port , std::vector < std::string > Q ) 
 {
     std::cout << "redirection ... " << std::endl;
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-    client.send("hello world\n");
+    // client.send("hello world\n");
     // client.send("bye world\n");
+    std::stringstream ss;
+    for ( std::size_t k(0)
+        ; k < Q.size()
+        ; ++k
+        )
+    {
+        ss << Q[k] << " ";
+    }
+    client . send ( ss.str () );
 }
 
 void consumer_redirection_thread(int queue_index)
@@ -90,11 +93,12 @@ void consumer_redirection_thread(int queue_index)
     {
         Chunk * item = ((sorting_queue [queue_index])) -> get ();
         Q . push_back ( item -> message );
-        if ( Q . size () > 100 )
+        if ( Q . size () > 1000 )
         {
             boost::thread redirection ( redirection_thread
                                       , connections[queue_index].host_name
                                       , connections[queue_index].port_no
+                                      , Q
                                       );
             Q . clear ();
         }
