@@ -47,8 +47,8 @@ void parse_config_file ( std::string file_name , host_info & host , std::vector 
     std::string token;
     std::ifstream myfile ( file_name.c_str() );
     bool get_host = false;
-    std::string host_name;
-    std::size_t port_no;
+    std::string host_name ( "" );
+    std::size_t port_no ( -1 );
     if ( myfile . is_open () )
     {
         while ( getline ( myfile , line ) )

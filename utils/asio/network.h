@@ -151,8 +151,8 @@ private:
     }
 
     boost::asio::io_service& io_service_;
-    tcp::acceptor acceptor_;
     QueueType * queue;
+    tcp::acceptor acceptor_;
 };
 
 template < typename Chunk, typename QueueType >
@@ -253,12 +253,15 @@ struct Client
 
             char reply[max_length];
             size_t reply_length = boost::asio::read(socket,boost::asio::buffer(reply, request_length));
-        
-            // socket.send(boost::asio::buffer(message));
+            if ( reply_length == 0 )
+            {
+                std::cout << "done reading . " << std::endl;
+            }
+            socket.send(boost::asio::buffer(message));
         }
         catch (std::exception& e)
         {
-            std::cerr << "Exception: " << e.what() << "\n";
+            std::cerr << "Exception: " << e.what() << std::endl;
         }
     }
 

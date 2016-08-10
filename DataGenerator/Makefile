@@ -1,2 +1,2 @@
 all:
-	g++ DataGenerator.cpp -o DataGenerator
+	${GORN_CXX} ${GORN_CXX_FLAGS} DataGenerator.cpp -o ${GORN_BIN}DataGenerator

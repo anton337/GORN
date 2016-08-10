@@ -1,3 +1,2 @@
 all:
-	g++ -std=c++11 ClientInterface.cpp -o ClientInterface -I../HashTableDaemon/ -lboost_thread -lboost_system -lpthread;
-	./script.sh
+	${GORN_CXX} ${GORN_CXX_FLAGS} ClientInterface.cpp -o ${GORN_BIN}ClientInterface -I${GORN_UTILS} -lboost_thread -lboost_system -lpthread;

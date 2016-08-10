@@ -26,6 +26,8 @@ struct Chunk
     }
 };
 
+Server < Chunk , ProducerConsumerQueue < Chunk > > * node_server = NULL;
+
 ProducerConsumerQueue < Chunk > * Queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
 
 ProducerConsumerQueue < Chunk > * * sorting_queue;
@@ -167,10 +169,9 @@ int main(int argc,char * argv[])
     node_index = host . port_no % 10;
 
     std::cout << "port no : " << host . port_no << std::endl;
-    Server < Chunk , ProducerConsumerQueue < Chunk > > * server 
-        = new Server < Chunk , ProducerConsumerQueue < Chunk > > ( Queue 
-                                                                 , host . port_no 
-                                                                 );
+    node_server = new Server < Chunk , ProducerConsumerQueue < Chunk > > ( Queue 
+                                                                         , host . port_no 
+                                                                         );
 
     sleep(1);//boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 
