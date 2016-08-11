@@ -67,14 +67,14 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
             if ( batch_count == count )
             {
                 client . send ( ss_cpy . str() );
-                usleep(10000);
+                usleep(1000);
                 done = false;
                 break;
             }
         }
         if ( !done ) continue;
         client . send ( ss_cpy . str() );
-        usleep(10000);
+        usleep(1000);
         break;
     }
     delete ss;

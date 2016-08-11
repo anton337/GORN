@@ -37,31 +37,36 @@ public:
 
     void start()
     {
+        char * data_ = new char[max_length];
+        memset ( data_ , 0 , max_length );
         socket_.async_read_some ( boost::asio::buffer ( data_
                                                       , max_length
                                                       )
                                 , boost::bind ( &session::handle_read
                                               , this
                                               , boost::asio::placeholders::error
+                                              , data_
                                               , boost::asio::placeholders::bytes_transferred
                                               )
                                 );
     }
 
 private:
-    void handle_read(const boost::system::error_code& error,
-        size_t bytes_transferred)
+    void handle_read ( const boost::system::error_code& error
+                     , char * p_data_
+                     , size_t bytes_transferred
+                     )
     {
         if (!error)
         {
-            std::string str = data_;
             boost::asio::async_write ( socket_
-                                     , boost::asio::buffer ( data_
+                                     , boost::asio::buffer ( p_data_
                                                            , bytes_transferred
                                                            )
                                      , boost::bind ( &session::handle_write
                                                    , this
                                                    , boost::asio::placeholders::error
+                                                   , p_data_
                                                    )
                                      );
         }
@@ -71,24 +76,30 @@ private:
         }
     }
 
-    void handle_write(const boost::system::error_code& error)
+    void handle_write ( const boost::system::error_code& error 
+                      , char * p_data_
+                      )
     {
         if (!error)
         {
             std::stringstream ss;
-            ss << data_;
-            std::cout << data_ << std::endl;
+            ss << p_data_;
+            std::cout << p_data_ << std::endl;
             std::string str;
             while ( ss >> str )
             {
                 queue -> put ( new Chunk(str) );
             }
+            delete [] p_data_;
+            char * data_ = new char[max_length];
+            memset ( data_ , 0 , max_length );
             socket_.async_read_some ( boost::asio::buffer ( data_
                                                           , max_length
                                                           )
                                     , boost::bind ( &session::handle_read
                                                   , this
                                                   , boost::asio::placeholders::error
+                                                  , data_
                                                   , boost::asio::placeholders::bytes_transferred
                                                   )
                                     );
@@ -101,7 +112,6 @@ private:
 
     tcp::socket socket_;
     enum { max_length = 1024 };
-    char data_[max_length];
     QueueType * queue;
 };
 
@@ -258,7 +268,6 @@ struct Client
             {
                 std::cout << "done reading . " << std::endl;
             }
-            // socket.send(boost::asio::buffer(message));
         }
         catch (std::exception& e)
         {
