@@ -14,6 +14,8 @@ void wait(int seconds)
 
 #define BUFFER_SIZE 10000
 
+host_info host;
+
 std::vector < connection_info > connections;
 
 struct Chunk
@@ -38,19 +40,31 @@ std::size_t node_index = -1;
 
 std::size_t num_received = 0;
 
+// std::size_t find_chord_connection ( std::size_t index )
+// {
+//     for ( std::size_t k(0)
+//         ; k < connections.size()
+//         ; ++k
+//         )
+//     {
+//         std::size_t ind = connections[k].port_no % 10;
+//     }
+// }
+
 void consumeItem ( Chunk * item )
 {
     if ( item != NULL )
     {
         std::size_t k = atoi ( item -> message . c_str () );
-        std::size_t index = k % num_sorting_queue;
+        std::size_t index = k % 4; // num_sorting_queue;
         if ( index != node_index )
         {
-            (sorting_queue [index]) -> put ( item );
+            std::size_t queue_index = rand()%num_sorting_queue;//find_chord_connection ( index );
+            (sorting_queue [queue_index]) -> put ( item );
         }
         else
         {
-            std::cout << ++num_received <<  " : " << item -> message << std::endl;
+            std::cout << host.port_no << " - " << ++num_received <<  " : " << item -> message << std::endl;
             delete item;
         }
     }
@@ -77,15 +91,31 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
     Client client(svc, host, std::to_string(port));
     // client.send("hello world\n");
     // client.send("bye world\n");
-    std::stringstream ss;
-    for ( std::size_t k(0)
-        ; k < Q.size()
-        ; ++k
-        )
+    std::size_t k(0);
+    int batch_count = 10;
+    while ( true )
     {
-        ss << Q[k] << " ";
+        int count = 0;
+        bool done = true;
+        std::stringstream ss;
+        for ( 
+            ; k < Q.size()
+            ; ++k
+            )
+        {
+            ss << Q[k] << " ";
+            count++;
+            if ( batch_count == count )
+            {
+                client . send ( ss.str () );
+                done = false;
+                break;
+            }
+        }
+        if ( !done ) continue;
+        client . send ( ss.str () );
+        break;
     }
-    client . send ( ss.str () );
 }
 
 void consumer_redirection_thread(int queue_index)
@@ -145,7 +175,6 @@ int main(int argc,char * argv[])
         threads . push_back ( new boost::thread { consumer_thread } );
     }
 
-    host_info host;
     parse_config_file ( config_file 
                       , host 
                       , connections 

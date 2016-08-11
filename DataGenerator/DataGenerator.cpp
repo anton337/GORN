@@ -24,7 +24,7 @@ int main(int argc,char * argv[])
             ; ++num
             )
         {
-            std::cout << rand() << " ";
+            std::cout << num /*rand()*/ << " ";
         }
         std::cout << std::endl;
     }

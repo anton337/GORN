@@ -77,6 +77,7 @@ private:
         {
             std::stringstream ss;
             ss << data_;
+            std::cout << data_ << std::endl;
             std::string str;
             while ( ss >> str )
             {
@@ -257,7 +258,7 @@ struct Client
             {
                 std::cout << "done reading . " << std::endl;
             }
-            socket.send(boost::asio::buffer(message));
+            // socket.send(boost::asio::buffer(message));
         }
         catch (std::exception& e)
         {

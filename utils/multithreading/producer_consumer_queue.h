@@ -9,6 +9,12 @@ class ProducerConsumerQueue
 
     public:
 
+    std::size_t size ()
+    {
+        boost::unique_lock<boost::mutex> lock(*_mutex);
+        return data . size ();
+    }
+
     void put ( T * item )
     {
         emptyCount -> wait ();

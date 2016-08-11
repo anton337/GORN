@@ -33,6 +33,7 @@ void read_file ( std::string file_name
             }
         }
         myfile . close ();
+        std::cout << num_print << std::endl;
     }
     else
     {
@@ -52,10 +53,29 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-    std::string line;
-    while ( *ss >> line )
+    int batch_count = 10;
+    while ( true )
     {
-        client.send(line+" ");
+        int count = 0;
+        bool done = true;
+        std::stringstream ss_cpy;
+        std::string line;
+        while ( *ss >> line )
+        {
+            ss_cpy << line << " ";
+            count++;
+            if ( batch_count == count )
+            {
+                client . send ( ss_cpy . str() );
+                usleep(10000);
+                done = false;
+                break;
+            }
+        }
+        if ( !done ) continue;
+        client . send ( ss_cpy . str() );
+        usleep(10000);
+        break;
     }
     delete ss;
 }
