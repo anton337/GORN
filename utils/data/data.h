@@ -64,6 +64,7 @@ void sort_write_file ( std::string                                         initi
                      )
 {
     std::string line;
+    std::string file_line;
     std::ifstream input (initial_name.c_str());
     std::ofstream output (comprehensive_name.c_str());
     std::vector < std::vector < std::string > :: const_iterator > it_vec;
@@ -78,14 +79,15 @@ void sort_write_file ( std::string                                         initi
     {
         if (output.is_open())
         {
+            if ( !input.eof() )
+            {
+                input >> file_line;
+            }
             while(true)
             {
                 bool done ( true );
                 bool init ( true );
-                if(!input.eof())
-                {
-                    input >> line;
-                }
+                std::size_t max_k(-1);
                 {
                     for ( std::size_t k(0)
                         ; k < it_vec.size()
@@ -97,6 +99,7 @@ void sort_write_file ( std::string                                         initi
                             if ( init )
                             {
                                 line = *(it_vec[k]);
+                                max_k = k;
                                 done = false;
                                 init = false;
                             }
@@ -105,10 +108,34 @@ void sort_write_file ( std::string                                         initi
                                 if ( *(it_vec[k]) < line )
                                 {
                                     line = *(it_vec[k]);
+                                    max_k = k;
                                     done = false;
                                 }
                             }
                         }
+                    }
+                }
+                if ( !input.eof() )
+                {
+                    if ( file_line < line )
+                    {
+                        line = file_line;
+                        input >> file_line;
+                        done = false;
+                    }
+                    else
+                    {
+                        if ( max_k < it_vec.size() )
+                        {
+                            ++(it_vec[max_k]);
+                        }
+                    }
+                }
+                else
+                {
+                    if ( max_k < it_vec.size() )
+                    {
+                        ++(it_vec[max_k]);
                     }
                 }
                 if ( done )

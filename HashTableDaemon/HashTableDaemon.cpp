@@ -6,6 +6,7 @@
 #include "multithreading/producer_consumer_queue.h"
 #include "asio/client.h"
 #include "asio/server.h"
+#include "data/data.h"
 #include "info.h"
 
 void wait(int seconds)
@@ -34,6 +35,8 @@ Server < Chunk , ProducerConsumerQueue < Chunk > > * node_server = NULL;
 ProducerConsumerQueue < Chunk > * Queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
 
 ProducerConsumerQueue < Chunk > * * sorting_queue;
+
+ProducerConsumerQueue < Chunk > * output_queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
 
 std::size_t num_sorting_queue = -1;
 
@@ -73,8 +76,33 @@ void consumeItem ( Chunk * item )
         }
         else
         {
-            std::cout << host.port_no << " - " << ++num_received <<  " : " << item -> message << std::endl;
-            delete item;
+            // std::cout << host.port_no << " - " << ++num_received <<  " : " << item -> message << std::endl;
+            output_queue -> put ( item );
+        }
+    }
+}
+
+void write_output_thread()
+{
+    std::size_t batch_index = host . port_no;
+    std::size_t batch_num = 0;
+    std::vector < std::string > Q;
+    while ( 1 )
+    {
+        Chunk * item = output_queue -> get ();
+        if ( item != NULL )
+        {
+            Q . push_back ( item -> message );
+        }
+        if ( Q . size () > 10000 )
+        {
+            std::cout << "writing to file : " << host . port_no << std::endl;
+            sort_data ( Q );
+            std::stringstream ss;
+            ss << "batch_output/" << "batch_" << batch_index << "_" << batch_num << ".bat";
+            write_file ( ss.str() , Q );
+            Q . clear ();
+            batch_num++;
         }
     }
 }
@@ -95,7 +123,8 @@ void consumer_thread()
 
 void redirection_thread ( std::string host , std::size_t port , std::vector < std::string > Q ) 
 {
-    std::cout << "redirection ... " << std::endl;
+    std::size_t redirection_ind = 0;
+    std::cout << "redirection ... " << redirection_ind++ << std::endl;
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
     // client.send("hello world\n");
@@ -150,9 +179,8 @@ void client_thread ( std::string host , std::size_t port )
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-
-    client.send("hello world\n");
-    client.send("bye world\n");
+    client.send("Clinet Testing Connection ... \n");
+    client.send("Done Testing ... \n");
 }
 
 void sigint(int a)
@@ -173,16 +201,11 @@ int main(int argc,char * argv[])
     }
     signal(SIGINT,sigint);
     config_file = std::string(argv[1]);
-    std::size_t n_threads = 1;
     std::vector < boost::thread * > threads;
 
-    for ( std::size_t k(0)
-        ; k < n_threads
-        ; ++k
-        )
-    {
-        threads . push_back ( new boost::thread { consumer_thread } );
-    }
+    threads . push_back ( new boost::thread { consumer_thread } );
+
+    threads . push_back ( new boost::thread { write_output_thread } );
 
     parse_config_file ( config_file 
                       , host 

@@ -84,7 +84,7 @@ private:
         {
             std::stringstream ss;
             ss << p_data_;
-            std::cout << p_data_ << std::endl;
+            // std::cout << p_data_ << std::endl;
             std::string str;
             while ( ss >> str )
             {

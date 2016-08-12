@@ -33,6 +33,23 @@ bool test_directory()
     return true;
 }
 
+bool test_scalable_directory()
+{
+    std::cout << "begin : test scalable directory" << std::endl;
+    std::vector < std::string > files;
+    std::string input_directory = "unit_tests/test_data/";
+    std::string initial_file = "unit_tests/test_output/comprehensive.out";
+    std::string comprehensive_file = "unit_tests/test_output/comprehensive.tmp";
+    sort_files ( input_directory
+               , initial_file
+               , comprehensive_file
+               );
+    std::cout << "done : test scalable directory" << std::endl;
+    return true;
+}
+
+
+
 bool test_create_file()
 {
     std::string file_name = "unit_tests/test_output/create_test";
@@ -60,6 +77,7 @@ int main()
     std::cout << "Running Unit Tests ..." << std::endl;
     UnitTest("Test sort one file",test_one_file);
     UnitTest("Test sort directory",test_directory);
+    UnitTest("Test sort scalable directory",test_scalable_directory);
     UnitTest("Test create file",test_create_file);
     UnitTest("Test remove file",test_remove_file);
     return 0;
