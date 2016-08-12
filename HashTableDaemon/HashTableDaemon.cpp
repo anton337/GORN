@@ -4,7 +4,8 @@
 #include <fstream>
 #include <deque>
 #include "multithreading/producer_consumer_queue.h"
-#include "asio/network.h"
+#include "asio/client.h"
+#include "asio/server.h"
 #include "info.h"
 
 void wait(int seconds)
@@ -40,16 +41,24 @@ std::size_t node_index = -1;
 
 std::size_t num_received = 0;
 
-// std::size_t find_chord_connection ( std::size_t index )
-// {
-//     for ( std::size_t k(0)
-//         ; k < connections.size()
-//         ; ++k
-//         )
-//     {
-//         std::size_t ind = connections[k].port_no % 10;
-//     }
-// }
+std::size_t find_chord_connection ( std::size_t index )
+{
+    std::size_t ret (-1);
+    for ( std::size_t k(0)
+        ; k < connections.size()
+        ; ++k
+        )
+    {
+        std::size_t width = (connections[k].port_no - host.port_no + 32) % 4;
+        std::size_t dist  = (index - host.port_no + 32) % 4;
+        if ( 2*width > dist )
+        {
+            ret = k;
+            break;
+        }
+    }
+    return ret;
+}
 
 void consumeItem ( Chunk * item )
 {
@@ -59,7 +68,7 @@ void consumeItem ( Chunk * item )
         std::size_t index = k % 4; // num_sorting_queue;
         if ( index != node_index )
         {
-            std::size_t queue_index = rand()%num_sorting_queue;//find_chord_connection ( index );
+            std::size_t queue_index = find_chord_connection ( index );
             (sorting_queue [queue_index]) -> put ( item );
         }
         else
@@ -92,7 +101,7 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
     // client.send("hello world\n");
     // client.send("bye world\n");
     std::size_t k(0);
-    int batch_count = 10;
+    int batch_count = 100;
     while ( true )
     {
         int count = 0;
@@ -125,7 +134,7 @@ void consumer_redirection_thread(int queue_index)
     {
         Chunk * item = ((sorting_queue [queue_index])) -> get ();
         Q . push_back ( item -> message );
-        if ( Q . size () > 1000 )
+        if ( Q . size () > 10000 )
         {
             boost::thread redirection ( redirection_thread
                                       , connections[queue_index].host_name

@@ -6,7 +6,8 @@
 #include <cstdlib>
 #include <vector>
 #include "multithreading/semaphore.h"
-#include "asio/network.h"
+#include "asio/client.h"
+#include "asio/server.h"
 #include "info.h"
 
 void read_file ( std::string file_name 
@@ -53,7 +54,7 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-    int batch_count = 10;
+    int batch_count = 100;
     while ( true )
     {
         int count = 0;
@@ -67,14 +68,14 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
             if ( batch_count == count )
             {
                 client . send ( ss_cpy . str() );
-                usleep(1000);
+                usleep(100);
                 done = false;
                 break;
             }
         }
         if ( !done ) continue;
         client . send ( ss_cpy . str() );
-        usleep(1000);
+        usleep(100);
         break;
     }
     delete ss;
@@ -143,6 +144,20 @@ int main(int argc,char * argv[])
                             );
             std::cout << "Done ... " << std::endl;
         }
+        if ( command == "test" )
+        {
+            std::string file_name = "data/synthetic_test_data";
+            std::cout << "Pushing " << file_name << " ... " << std::endl;
+            std::stringstream * ss = new std::stringstream();
+            read_file ( file_name , ss );
+            boost::thread t ( push_data_thread
+                            , host.host_name
+                            , host.port_no
+                            , ss
+                            );
+            std::cout << "Done ... " << std::endl;
+        }
+
     }
     return 0;
 }
