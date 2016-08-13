@@ -193,6 +193,19 @@ void remove_file ( std::string file )
     }
 }
 
+void rename_file ( std::string src , std::string dest )
+{
+    try
+    {
+        boost::filesystem::rename(src,dest);
+    }
+    catch ( boost::filesystem::filesystem_error & e )
+    {
+        std::cout << e.what() << std::endl;
+    }
+}
+
+
 void sort_directory ( std::string dir 
                     , std::string output_file 
                     )
@@ -224,9 +237,10 @@ void sort_directory ( std::string dir
 // it is assumed to already contain sorted data
 // the second input is a smaller vector in memory
 // the smaller vector is sorted in memory
-void sort_files ( std::string dir
+bool sort_files ( std::string dir
                 , std::string initial_file
                 , std::string comprehensive_file
+                , bool remove = false
                 )
 {
     std::vector < std::string > files;
@@ -242,12 +256,18 @@ void sort_files ( std::string dir
             sorted_data . push_back ( std::vector < std::string > () );
             read_file ( files[k] , sorted_data[k] );
             sort_data ( sorted_data[k] );
+            if ( remove )
+            {
+                remove_file ( files[k] );
+            }
         }
         sort_write_file ( initial_file 
                         , sorted_data
                         , comprehensive_file
                         );
+        return true;
     }
+    return false;
 }
 
 #endif

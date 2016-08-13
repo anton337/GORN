@@ -35,8 +35,6 @@ bool test_directory()
 
 bool test_scalable_directory()
 {
-    std::cout << "begin : test scalable directory" << std::endl;
-    std::vector < std::string > files;
     std::string input_directory = "unit_tests/test_data/";
     std::string initial_file = "unit_tests/test_output/comprehensive.out";
     std::string comprehensive_file = "unit_tests/test_output/comprehensive.tmp";
@@ -44,7 +42,6 @@ bool test_scalable_directory()
                , initial_file
                , comprehensive_file
                );
-    std::cout << "done : test scalable directory" << std::endl;
     return true;
 }
 
