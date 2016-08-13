@@ -84,8 +84,7 @@ void consumeItem ( Chunk * item )
 
 void write_output_thread()
 {
-    std::size_t batch_index = host . port_no;
-    std::size_t batch_num = 0;
+    int batch_num = 0;
     std::vector < std::string > Q;
     while ( 1 )
     {
@@ -94,12 +93,12 @@ void write_output_thread()
         {
             Q . push_back ( item -> message );
         }
-        if ( Q . size () > 10000 )
+        if ( Q . size () > 100000 )
         {
             std::cout << "writing to file : " << host . port_no << std::endl;
             sort_data ( Q );
             std::stringstream ss;
-            ss << "batch_output/" << "batch_" << batch_index << "_" << batch_num << ".bat";
+            ss << "batch_output/" << "batch_" << host . port_no << "_" << batch_num << ".bat";
             write_file ( ss.str() , Q );
             Q . clear ();
             batch_num++;
@@ -121,9 +120,9 @@ void consumer_thread()
     }
 }
 
+std::size_t redirection_ind = 0;
 void redirection_thread ( std::string host , std::size_t port , std::vector < std::string > Q ) 
 {
-    std::size_t redirection_ind = 0;
     std::cout << "redirection ... " << redirection_ind++ << std::endl;
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));

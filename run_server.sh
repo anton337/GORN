@@ -8,4 +8,5 @@ do
 	${GORN_BIN}HashTableDaemon "$i" &
 done
 
+${GORN_BIN}DataSorterDaemon &
 
