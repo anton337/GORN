@@ -82,9 +82,10 @@ private:
     {
         if (!error)
         {
+            std::string message ( p_data_ );
+            std::string clean_message ( message . substr ( 0 , message . size() - 2 ) );
             std::stringstream ss;
-            ss << p_data_;
-            // std::cout << p_data_ << std::endl;
+            ss << clean_message; 
             std::string str;
             while ( ss >> str )
             {

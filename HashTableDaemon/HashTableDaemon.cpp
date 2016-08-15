@@ -126,8 +126,6 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
     std::cout << "redirection ... " << redirection_ind++ << std::endl;
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-    // client.send("hello world\n");
-    // client.send("bye world\n");
     std::size_t k(0);
     int batch_count = 100;
     while ( true )
