@@ -81,8 +81,20 @@ void update_positions ()
     }
 }
 
+float camera_x = 0;
+float camera_y = 0;
+float camera_z = 0;
+
 void drawStuff(void)
 {
+    glLoadIdentity();
+    gluLookAt(0.0, 0.0, 3,  /* eye is at (0,0,5) */
+    0.0, 0.0, 0.0,      /* center is at (0,0,0) */
+    0.0, 1.0, 0.);      /* up is in positive Y direction */
+    glTranslatef ( camera_x
+                 , camera_y
+                 , camera_z
+                 );
     double min_R = 1000, R;
     std::set < node * , NodeComparator >::iterator it = M . begin ();
     while ( it != M . end () )
@@ -279,6 +291,8 @@ void keyboard ( unsigned char key
                 std::cout << ret << std::endl;
             }
             break;
+        case 'q': camera_z += 0.01; break;
+        case 'z': camera_z -= 0.01; break;
         default: break;
     }
 }
