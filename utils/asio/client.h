@@ -14,6 +14,7 @@
 #include <cstring>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <sstream>
 
 using boost::asio::ip::tcp;
 
@@ -43,7 +44,8 @@ struct Client
         }
     }
 
-    void send(std::string const& message) {
+    void send ( std::string const& message )  
+    {
         try
         {
             using namespace std; // For strlen.
@@ -62,6 +64,36 @@ struct Client
         {
             std::cerr << "Exception: " << e.what() << std::endl;
         }
+    }
+
+    std::string send_complete ( std::string const& message )
+    {
+        std::stringstream ss;
+        try
+        {
+            using namespace std; // For strlen.
+            const char * request = message . c_str ();
+            size_t request_length = strlen(request);
+            boost::asio::write(socket, boost::asio::buffer(request, request_length));
+            std::size_t reply_length = 1;
+            while ( reply_length > 0 )
+            {
+                char reply[max_length];
+                reply_length = boost::asio::read(socket,boost::asio::buffer(reply, request_length));
+                reply[request_length] = '\0';
+                if ( reply_length == 0 )
+                {
+                    std::cout << "done reading . " << std::endl;
+                }
+                std::string response( reply );
+                ss << response;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cerr << "Exception: " << e.what() << std::endl;
+        }
+        return ss.str();
     }
 
 };
