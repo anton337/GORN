@@ -42,15 +42,19 @@ void read_file ( std::string file_name
     }
 }
 
-void ping_thread ( std::string host , std::size_t port ) 
+void ping_thread ( std::string host 
+                 , std::size_t port 
+                 ) 
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-
     client.send("Requesting Ping ... \n");
 }
 
-void push_data_thread ( std::string host , std::size_t port , std::stringstream * ss ) 
+void push_data_thread ( std::string host 
+                      , std::size_t port 
+                      , std::stringstream * ss 
+                      ) 
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
@@ -81,7 +85,19 @@ void push_data_thread ( std::string host , std::size_t port , std::stringstream 
     delete ss;
 }
 
-int main(int argc,char * argv[])
+void find_data_thread ( std::string host 
+                      , std::size_t port 
+                      , std::string what 
+                      ) 
+{
+    boost::asio::io_service svc;
+    Cline client(svc, host, std::to_string(port));
+    client.send(what);
+}
+
+int main ( int argc
+         , char * argv[]
+         )
 {
     std::cout << "Welcome to ClientInterface!" << std::endl;
     std::string config_file;
@@ -156,6 +172,17 @@ int main(int argc,char * argv[])
                             , ss
                             );
             std::cout << "Done ... " << std::endl;
+        }
+        if ( command == "findone" )
+        {
+            std::string what;
+            ss >> what;
+            std::cout << "Searching " << what << " ... " << std::endl;
+            boost::thread t ( find_data_thread
+                            , host.host_name
+                            , host.port_no
+                            , what
+                            );
         }
 
     }

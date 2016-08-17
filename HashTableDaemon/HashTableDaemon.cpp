@@ -20,11 +20,17 @@ host_info host;
 
 std::vector < connection_info > connections;
 
+enum MessageType { UNDEFINED = -1, STORE = 0 , FIND = 1 };
+
 struct Chunk
 {
+    MessageType type;
     std::string message;
-    Chunk ( std::string _message )
+    Chunk ( std::string _message 
+          , MessageType _type   = UNDEFINED
+          )
     : message ( _message )
+    ,   type  (    _type )
     {
 
     }
