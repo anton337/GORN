@@ -52,38 +52,44 @@ void drawString (const char *s)    //How do display text
     }
 };
 
+double m_mouse_x = 0;
+double m_mouse_y = 0;
+
 void update_positions ()
 {
-    std::set < node * , NodeComparator >::iterator it = M . begin ();
-    while ( it != M . end () )
+    for ( int k(0); k < 100; k++ )
     {
-        if ( (*it)->parent )
+        std::set < node * , NodeComparator >::iterator it = M . begin ();
+        while ( it != M . end () )
         {
-            double dx = (*it)->x - (*it)->parent->x;
-            double dy = (*it)->y - (*it)->parent->y;
-            double D = sqrt ( dx*dx + dy*dy );
-            double R = D - .1;
-            dx *= -0.0001*R/D;
-            dy *= -0.0001*R/D;
-            (*it)->x += dx;
-            (*it)->y += dy;
-            (*it)->parent->x -= dx;
-            (*it)->parent->y -= dy;
+            if ( (*it)->parent )
+            {
+                double dx = (*it)->x - (*it)->parent->x;
+                double dy = (*it)->y - (*it)->parent->y;
+                double D = sqrt ( dx*dx + dy*dy );
+                double R = D - .1;
+                dx *= -0.0001*R/D;
+                dy *= -0.0001*R/D;
+                (*it)->x += dx;
+                (*it)->y += dy;
+                (*it)->parent->x -= dx;
+                (*it)->parent->y -= dy;
+            }
+            ++it;
         }
-        ++it;
     }
     if ( min_pt )
     {
-        double mx =  (2*(double)mouse_x/width -1); 
-        double my = -(2*(double)mouse_y/height-1);
-        min_pt->x += 0.01*(mx - min_pt->x);
-        min_pt->y += 0.01*(my - min_pt->y);
+        min_pt->x += 0.1*(m_mouse_x - min_pt->x);
+        min_pt->y += 0.1*(m_mouse_y - min_pt->y);
     }
 }
 
 float camera_x = 0;
 float camera_y = 0;
 float camera_z = 0;
+
+bool pick = false;
 
 void drawStuff(void)
 {
@@ -95,33 +101,44 @@ void drawStuff(void)
                  , camera_y
                  , camera_z
                  );
-    double min_R = 1000, R;
-    std::set < node * , NodeComparator >::iterator it = M . begin ();
-    while ( it != M . end () )
+    if ( pick )
     {
-        if ( (*it)->parent )
+        pick = false;
+        double min_R = 1000, R;
+        std::set < node * , NodeComparator >::iterator it = M . begin ();
+        while ( it != M . end () )
         {
-            glColor3f(1,1,1);
-            glBegin(GL_LINES);
-            glVertex3f ( (*it)->x
-                       , (*it)->y
-                       , 0
-                       );
-            glVertex3f ( (*it)->parent->x
-                       , (*it)->parent->y
-                       , 0
-                       );
-            glEnd();
+            R = sqrt ( pow ( (*it)->x - m_mouse_x , 2 )
+                     + pow ( (*it)->y - m_mouse_y , 2 )
+                     );
+            if ( R < min_R )
+            {
+                min_R = R;
+                min_pt = (*it);
+            }
+            ++it;
         }
-        R = sqrt ( pow ( (*it)->x -  (2*(double)mouse_x/width -1) , 2 )
-                 + pow ( (*it)->y - -(2*(double)mouse_y/height-1) , 2 )
-                 );
-        if ( R < min_R )
+    }
+    {
+        std::set < node * , NodeComparator >::iterator it = M . begin ();
+        while ( it != M . end () )
         {
-            min_R = R;
-            min_pt = (*it);
+            if ( (*it)->parent )
+            {
+                glColor3f(1,1,1);
+                glBegin(GL_LINES);
+                glVertex3f ( (*it)->x
+                           , (*it)->y
+                           , 0
+                           );
+                glVertex3f ( (*it)->parent->x
+                           , (*it)->parent->y
+                           , 0
+                           );
+                glEnd();
+            }
+            ++it;
         }
-        ++it;
     }
     if ( min_pt )
     {
@@ -130,22 +147,33 @@ void drawStuff(void)
         glVertex3f ( min_pt -> x - .2 , min_pt -> y , 0 );
         glVertex3f ( min_pt -> x , min_pt -> y + .2 , 0 );
         glVertex3f ( min_pt -> x , min_pt -> y - .2 , 0 );
-        double mx =  (2*(double)mouse_x/width -1); 
-        double my = -(2*(double)mouse_y/height-1);
-        glVertex3f ( mx + .2 , my , 0 );
-        glVertex3f ( mx - .2 , my , 0 );
-        glVertex3f ( mx , my + .2 , 0 );
-        glVertex3f ( mx , my - .2 , 0 );
-        double r = .15;
+        double r = .15/(3+camera_z);
         for ( double th(0)
             ; th < 2*M_PI
             ; th += 0.1
             )
         {
-            glVertex3f ( mx + r * cos ( th ) , my + r * sin ( th ) , 0 );
-            glVertex3f ( mx - r * sin ( th ) , my + r * cos ( th ) , 0 );
-            glVertex3f ( mx + r * cos ( th+0.1 ) , my + r * sin ( th+0.1 ) , 0 );
-            glVertex3f ( mx - r * sin ( th+0.1 ) , my + r * cos ( th+0.1 ) , 0 );
+            glVertex3f ( min_pt -> x + r * cos ( th     ) , min_pt -> y + r * sin ( th     ) , 0 );
+            glVertex3f ( min_pt -> x + r * cos ( th+0.1 ) , min_pt -> y + r * sin ( th+0.1 ) , 0 );
+        }
+        glEnd();
+    }
+    {
+        glBegin(GL_LINES);
+        m_mouse_x =  ((2*(double)mouse_x/width -1)/(3+camera_z)-camera_x); 
+        m_mouse_y = -((2*(double)mouse_y/height-1)/(3+camera_z)+camera_y);
+        glVertex3f ( m_mouse_x + .2 , m_mouse_y , 0 );
+        glVertex3f ( m_mouse_x - .2 , m_mouse_y , 0 );
+        glVertex3f ( m_mouse_x , m_mouse_y + .2 , 0 );
+        glVertex3f ( m_mouse_x , m_mouse_y - .2 , 0 );
+        double r = .15/(3+camera_z);
+        for ( double th(0)
+            ; th < 2*M_PI
+            ; th += 0.1
+            )
+        {
+            glVertex3f ( m_mouse_x + r * cos ( th     ) , m_mouse_y + r * sin ( th     ) , 0 );
+            glVertex3f ( m_mouse_x + r * cos ( th+0.1 ) , m_mouse_y + r * sin ( th+0.1 ) , 0 );
         }
         glEnd();
     }
@@ -153,10 +181,17 @@ void drawStuff(void)
 
 void display(void)
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  drawStuff();
-  glutSwapBuffers();
-  glutPostRedisplay();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawStuff();
+    glutSwapBuffers();
+    glutPostRedisplay();
+    for ( int k(0)
+        ; k < 10
+        ; ++k
+        )
+    {
+        update_positions ();
+    }
 }
 
 void get_connections ( std::string host
@@ -218,7 +253,7 @@ void connections_thread ()
             try 
             {
                 node * n = Q . front ();
-                std::cout << Q . size () << " " << n -> host << " " << n -> dir << std::endl;
+                //std::cout << Q . size () << " " << n -> host << " " << n -> dir << std::endl;
                 Q . pop_front ();
                 if ( M . find ( n ) == M . end () )
                 {
@@ -240,14 +275,7 @@ void connections_thread ()
 
 void idle()
 {
-    for ( int k(0)
-        ; k < 1000
-        ; ++k
-        )
-    {
-        update_positions ();
-    }
-    usleep(100000);
+
 }
 
 void mouse_func ( int button
@@ -258,6 +286,10 @@ void mouse_func ( int button
 {
     mouse_x = x;
     mouse_y = y;
+    if ( min_pt )
+    {
+        std::cout << min_pt->host << "/" << min_pt->dir << std::endl;
+    }
 }
 
 void move_mouse_func ( int x
@@ -286,13 +318,19 @@ void keyboard ( unsigned char key
                 cmd << "/";
                 cmd << min_pt->dir;
                 cmd << " &";
-                std::cout << cmd . str() << std::endl;
+                //std::cout << cmd . str() << std::endl;
                 int ret = system ( cmd . str () . c_str () );
                 std::cout << ret << std::endl;
             }
             break;
+        case 'a': camera_x += 0.01; break;
+        case 'd': camera_x -= 0.01; break;
+        case 's': camera_y += 0.01; break;
+        case 'w': camera_y -= 0.01; break;
         case 'q': camera_z += 0.01; break;
         case 'z': camera_z -= 0.01; break;
+        case 'p': pick=true; break;
+        case 'o': pick=false; min_pt = NULL; break;
         default: break;
     }
 }
@@ -312,7 +350,7 @@ void init(void)
   glMatrixMode(GL_PROJECTION);
   gluPerspective( /* field of view in degree */ 40.0,
     /* aspect ratio */ 1.0,
-    /* Z near */ 1.0, /* Z far */ 10.0);
+    /* Z near */ 0.01, /* Z far */ 10.0);
   glMatrixMode(GL_MODELVIEW);
   gluLookAt(0.0, 0.0, 3,  /* eye is at (0,0,5) */
     0.0, 0.0, 0.0,      /* center is at (0,0,0) */
@@ -327,10 +365,11 @@ int main(int argc,char **argv)
 {
     srand(time(NULL));
     std::cout << "Welcome to Crawler!" << std::endl;
-    Q . push_back ( new node ( "www.ask.com" , "/" , NULL ) );
-    Q . push_back ( new node ( "www.google.com" , "/" , NULL ) );
-    Q . push_back ( new node ( "www.facebook.com" , "/" , NULL ) );
-    Q . push_back ( new node ( "www.youtube.com" , "/" , NULL ) );
+    // Q . push_back ( new node ( "www.ask.com" , "/" , NULL ) );
+    // Q . push_back ( new node ( "www.google.com" , "/" , NULL ) );
+    // Q . push_back ( new node ( "www.facebook.com" , "/" , NULL ) );
+    // Q . push_back ( new node ( "www.youtube.com" , "/" , NULL ) );
+    Q . push_back ( new node ( "www.bing.com" , "/" , NULL ) );
     boost::thread t ( connections_thread );
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
