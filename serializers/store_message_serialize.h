@@ -19,19 +19,31 @@ class StoreMessage : public Serialize
         {
             ss << m_data [ k ] << " ";
         }
+        std::size_t check_sum = 0;
+        for ( std::size_t k(0)
+            ; k < ss.str().length()
+            ; ++k
+            )
+        {
+            check_sum += (int)ss.str()[k];
+        }
+        ss << check_sum << " ";
     }
     std::size_t deserialize( std::string str )
     {
         std::stringstream ss;
+        std::stringstream ss_check_sum;
         ss << str;
         std::size_t type;
+        ss >> type;
+        ss_check_sum << type << " ";
         if ( type != get_type () )
         {
             return 1;
         }
-        ss >> type;
         std::size_t num;
         ss >> num;
+        ss_check_sum << num << " ";
         m_data . clear ();
         for ( std::size_t k(0)
             ; k < num
@@ -40,7 +52,22 @@ class StoreMessage : public Serialize
         {
             std::string value;
             ss >> value;
+            ss_check_sum << value << " ";
             m_data . push_back ( value );
+        }
+        std::size_t check_sum = 0;
+        for ( std::size_t k(0)
+            ; k < ss_check_sum.str().length()
+            ; ++k
+            )
+        {
+            check_sum += (int)ss_check_sum.str()[k];
+        }
+        std::size_t check_sum_2;
+        ss >> check_sum_2;
+        if ( check_sum != check_sum_2 )
+        {
+            std::cout << "check sums do not match!" << std::endl;
         }
         if ( !ss.str().empty() )
         {
