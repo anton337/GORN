@@ -1,6 +1,7 @@
 #ifndef PRODUCER_CONSUMER_QUEUE_H
 #define PRODUCER_CONSUMER_QUEUE_H
 
+#include <deque>
 #include "semaphore.h"
 
 template < typename T >
