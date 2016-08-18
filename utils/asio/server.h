@@ -121,13 +121,11 @@ class server
 {
 public:
     server ( boost::asio::io_service& io_service
-           , QueueType * _store_queue
-           , QueueType *  _find_queue
+           , QueueType * _queue
            , short port
            )
     : io_service_(io_service)
-    , store_queue ( _store_queue )
-    ,  find_queue (  _find_queue )
+    , queue ( _queue )
     , acceptor_(io_service, tcp::endpoint(tcp::v4(), port))
     {
         start_accept();
