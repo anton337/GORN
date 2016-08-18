@@ -1,6 +1,9 @@
 #ifndef INFO_H
 #define INFO_H
 
+#include <iostream>
+#include <fstream>
+
 struct host_info
 {
     std::string host_name;
