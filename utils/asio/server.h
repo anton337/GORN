@@ -14,6 +14,7 @@
 #include <iostream>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
 
 using boost::asio::ip::tcp;
 
@@ -83,14 +84,7 @@ private:
         if (!error)
         {
             std::string message ( p_data_ );
-            std::string clean_message ( message . substr ( 0 , message . size() - 2 ) );
-            std::stringstream ss;
-            ss << clean_message; 
-            std::string str;
-            while ( ss >> str )
-            {
-                queue -> put ( new Chunk(str) );
-            }
+            queue -> put ( new Chunk(message) );
             delete [] p_data_;
             char * data_ = new char[max_length];
             memset ( data_ , 0 , max_length );
@@ -112,7 +106,7 @@ private:
     }
 
     tcp::socket socket_;
-    enum { max_length = 1024 };
+    enum { max_length = 32*1024 };
     QueueType * queue;
 };
 
