@@ -24,8 +24,8 @@ enum MessageType { UNDEFINED = -1, STORE = 0 , FIND = 1 };
 
 struct Chunk
 {
-    MessageType type;
     std::string message;
+    MessageType type;
     Chunk ( std::string _message 
           , MessageType _type   = UNDEFINED
           )
