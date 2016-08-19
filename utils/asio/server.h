@@ -15,6 +15,8 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+#include <string>
+#include <vector>
 
 using boost::asio::ip::tcp;
 
@@ -38,8 +40,9 @@ public:
 
     void start()
     {
-        char * data_ = new char[max_length];
-        memset ( data_ , 0 , max_length );
+        char * data_ = new char[max_length+1];
+        std::vector < std::string > * vec = new std::vector < std::string > ();
+        memset ( data_ , 0 , max_length+1 );
         socket_.async_read_some ( boost::asio::buffer ( data_
                                                       , max_length
                                                       )
@@ -48,6 +51,7 @@ public:
                                               , boost::asio::placeholders::error
                                               , data_
                                               , boost::asio::placeholders::bytes_transferred
+                                              , vec
                                               )
                                 );
     }
@@ -56,6 +60,7 @@ private:
     void handle_read ( const boost::system::error_code& error
                      , char * p_data_
                      , size_t bytes_transferred
+                     , std::vector < std::string > * vec
                      )
     {
         if (!error)
@@ -68,6 +73,7 @@ private:
                                                    , this
                                                    , boost::asio::placeholders::error
                                                    , p_data_
+                                                   , vec
                                                    )
                                      );
         }
@@ -79,15 +85,15 @@ private:
 
     void handle_write ( const boost::system::error_code& error 
                       , char * p_data_
+                      , std::vector < std::string > * vec
                       )
     {
         if (!error)
         {
-            std::string message ( p_data_ );
-            queue -> put ( new Chunk(message) );
+            vec -> push_back ( std::string ( p_data_ ) );
             delete [] p_data_;
-            char * data_ = new char[max_length];
-            memset ( data_ , 0 , max_length );
+            char * data_ = new char[max_length+1];
+            memset ( data_ , 0 , max_length+1 );
             socket_.async_read_some ( boost::asio::buffer ( data_
                                                           , max_length
                                                           )
@@ -96,8 +102,23 @@ private:
                                                   , boost::asio::placeholders::error
                                                   , data_
                                                   , boost::asio::placeholders::bytes_transferred
+                                                  , vec
                                                   )
                                     );
+            std::cout << "bytes transferred : " << (size_t)boost::asio::placeholders::bytes_transferred << " / " << max_length << std::endl;
+            if ( (size_t)boost::asio::placeholders::bytes_transferred < max_length )
+            {
+                std::stringstream ss;
+                for ( std::size_t i(0)
+                    ; i < vec -> size ()
+                    ; ++i
+                    )
+                {
+                    ss << (*vec)[i];
+                }
+                queue -> put ( new Chunk( ss . str ( ) ) );
+                // delete vec;
+            }
         }
         else
         {

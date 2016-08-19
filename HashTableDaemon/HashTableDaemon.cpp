@@ -80,7 +80,7 @@ void consumeItem ( Chunk * item )
             case STORE_TYPE :
             {
                 StoreMessage message;
-                message . deserialize ( input_message );
+                message . deserialize ( item -> message );
                 std::vector < std::string > data = message . get_data ();
                 for ( std::size_t i(0)
                     ; i < data.size()
