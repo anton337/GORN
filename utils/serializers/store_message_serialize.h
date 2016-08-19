@@ -111,7 +111,7 @@ public:
 
     std::size_t get_type ()
     {
-        return 1234589;
+        return STORE_TYPE;
     }
 
 };

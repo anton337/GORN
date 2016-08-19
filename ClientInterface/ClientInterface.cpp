@@ -9,6 +9,7 @@
 #include "asio/client.h"
 #include "asio/server.h"
 #include "info.h"
+#include "serializers/store_message_serialize.h"
 
 void read_file ( std::string file_name 
                , std::stringstream * output_ss 
@@ -63,22 +64,26 @@ void push_data_thread ( std::string host
     {
         int count = 0;
         bool done = true;
-        std::stringstream ss_cpy;
+        std::vector < std::string > cpy;
         std::string line;
         while ( *ss >> line )
         {
-            ss_cpy << line << " ";
+            cpy . push_back ( line );
             count++;
             if ( batch_count == count )
             {
-                client . send ( ss_cpy . str() );
-                usleep(100);
+                StoreMessage message;
+                message . set_data ( cpy );
+                client . send ( message . serialize ( 0 , cpy . size () ) );
                 done = false;
+                usleep(100);
                 break;
             }
         }
         if ( !done ) continue;
-        client . send ( ss_cpy . str() );
+        StoreMessage message;
+        message . set_data ( cpy );
+        client . send ( message . serialize ( 0 , cpy . size () ) );
         usleep(100);
         break;
     }

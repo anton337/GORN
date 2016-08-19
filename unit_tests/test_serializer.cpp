@@ -51,14 +51,15 @@ bool test_find_message_serializer()
 
 bool test_find_reply_message_serializer()
 {
-    std::vector < bool > vec;
+    std::vector < std::string > vec;
     for ( std::size_t k(0)
         ; k < 10000
         ; ++k
         )
     {
-        bool val = rand()%2==1;
-        vec . push_back ( val );
+        std::stringstream ss;
+        ss << rand();
+        vec . push_back ( ss.str() );
     }
     std::cout << std::endl;
     FindReplyMessage c_find_reply_message;

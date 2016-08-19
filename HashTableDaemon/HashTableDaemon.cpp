@@ -8,6 +8,7 @@
 #include "asio/server.h"
 #include "data/data.h"
 #include "info.h"
+#include "serializers/store_message_serialize.h"
 
 void wait(int seconds)
 {
@@ -69,21 +70,45 @@ std::size_t find_chord_connection ( std::size_t index )
     return ret;
 }
 
+
 void consumeItem ( Chunk * item )
 {
     if ( item != NULL )
     {
-        std::size_t k = atoi ( item -> message . c_str () );
-        std::size_t index = k % 4; // num_sorting_queue;
-        if ( index != node_index )
+        switch ( Serialize :: extract_type ( item -> message ) )
         {
-            std::size_t queue_index = find_chord_connection ( index );
-            (sorting_queue [queue_index]) -> put ( item );
-        }
-        else
-        {
-            // std::cout << host.port_no << " - " << ++num_received <<  " : " << item -> message << std::endl;
-            output_queue -> put ( item );
+            case STORE_TYPE :
+            {
+                StoreMessage message;
+                message . deserialize ( input_message );
+                std::vector < std::string > data = message . get_data ();
+                for ( std::size_t i(0)
+                    ; i < data.size()
+                    ; ++i
+                    )
+                {
+                    std::size_t k = atoi ( data[i] . c_str () );
+                    std::size_t index = k % 4; // num_sorting_queue;
+                    if ( index != node_index )
+                    {
+                        std::size_t queue_index = find_chord_connection ( index );
+                        (sorting_queue [queue_index]) -> put ( item );
+                    }
+                    else
+                    {
+                        // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
+                        output_queue -> put ( item );
+                    }
+                }
+                break;
+            }
+            default :
+            {
+                // message type not recognized 
+                // std::cout << item -> message << std::endl;
+                std::cout << "ERROR!" << std::endl;
+                break;
+            }
         }
     }
 }
@@ -138,23 +163,29 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
     {
         int count = 0;
         bool done = true;
-        std::stringstream ss;
+        std::vector < std::string > cpy;
         for ( 
             ; k < Q.size()
             ; ++k
             )
         {
-            ss << Q[k] << " ";
+            cpy . push_back ( Q[k] );
             count++;
             if ( batch_count == count )
             {
-                client . send ( ss.str () );
+                StoreMessage message;
+                message . set_data ( cpy );
+                client . send ( message . serialize ( 0 , cpy . size () ) );
                 done = false;
+                usleep(100);
                 break;
             }
         }
         if ( !done ) continue;
-        client . send ( ss.str () );
+        StoreMessage message;
+        message . set_data ( cpy );
+        client . send ( message . serialize ( 0 , cpy . size () ) );
+        usleep(100);
         break;
     }
 }

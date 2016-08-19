@@ -148,7 +148,7 @@ public:
 
     std::size_t get_type ()
     {
-        return 4389728;
+        return FIND_TYPE;
     }
 };
 

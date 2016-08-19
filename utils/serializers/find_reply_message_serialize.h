@@ -6,7 +6,7 @@
 
 class FindReplyMessage : public Serialize
 {
-    std::vector < bool > m_exists;
+    std::vector < std::string > m_exists;
     std::vector < connection_info > m_connections;
 
 public:
@@ -16,7 +16,7 @@ public:
 
     }
 
-    std::vector < bool > get_data ()
+    std::vector < std::string > get_data ()
     {
         return m_exists;
     }
@@ -31,7 +31,7 @@ public:
         m_connections . pop_back ();
     }
 
-    void set_data ( std::vector < bool > const & p_data )
+    void set_data ( std::vector < std::string > const & p_data )
     {
         m_exists . clear ();
         for ( std::size_t k(0)
@@ -117,7 +117,7 @@ public:
             ; ++k
             )
         {
-            bool value;
+            std::string value;
             ss >> value;
             ss_check_sum << value << " ";
             m_exists . push_back ( value );
@@ -149,7 +149,7 @@ public:
 
     std::size_t get_type ()
     {
-        return 938753;
+        return FIND_REPLY_TYPE;
     }
 
 };

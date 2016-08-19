@@ -29,11 +29,11 @@ bool test_file_queue ()
     return true;
 }
 
-void pop ( std::vector < QueueEntry > vec
-         , QueueFile                  queue_file
+void pop ( std::vector < QueueEntry > * vec
+         , QueueFile                    queue_file
          )
 {
-    queue_file . Pop ( vec );
+    queue_file . Pop ( *vec );
 }
 
 void push ( std::vector < QueueEntry > vec
@@ -50,12 +50,17 @@ bool test_file_queue_parallel_test ()
     QueueFile queue_file ( "unit_tests/queue_data/" );
     std::vector < boost::thread * > threads;
     std::vector < QueueEntry > vec;
+    std::size_t check_sum_1 = 0;
     for ( std::size_t k(0)
         ; k < 10000
         ; ++k
         )
     {
-        vec . push_back ( QueueEntry ( k , "hello"  ) );
+        std::stringstream ss;
+        std::size_t num = rand();
+        ss << num;
+        vec . push_back ( QueueEntry ( k , ss.str() ) );
+        check_sum_1 += num;
     }
     std::cout << "push" << std::endl;
     for ( std::size_t file(0)
@@ -80,7 +85,7 @@ bool test_file_queue_parallel_test ()
         )
     {
         threads . push_back ( new boost::thread ( pop 
-                                                , out_vec 
+                                                , &out_vec 
                                                 , queue_file 
                                                 ) 
                             );
@@ -93,14 +98,18 @@ bool test_file_queue_parallel_test ()
         threads[k] -> join ();
     }
     std::cout << "done" << std::endl;
+    std::size_t check_sum_2 = 0;
     for ( std::size_t k(0)
         ; k < out_vec . size ()
         ; ++k
         )
     {
-        std::cout << out_vec[k].key << " " << out_vec[k].value << std::endl;
+        std::size_t num = atoi(out_vec[k].value.c_str());
+        check_sum_2 += num;
     }
-    return true;
+    check_sum_1 *= n_threads; // since we duplicated the data n_threads times
+    std::cout << "check sum : " << check_sum_1 << " " << check_sum_2 << std::endl;
+    return check_sum_1 == check_sum_2;
 }
 
 int main()

@@ -60,7 +60,7 @@ public:
                 status = true;
                 continue;
             }
-            sleep(5);
+            usleep(500000);
         }
     }
 
@@ -85,7 +85,7 @@ public:
                     continue;
                 }
             }
-            sleep(1);
+            usleep(500000);
         }
     }
 
@@ -207,7 +207,7 @@ private:
 
     void Unlock()
     {
-        while ( unlock () == 1 ) { sleep ( 1 ); }
+        while ( unlock () == 1 ) { usleep(500000); }
     }
 };
 
