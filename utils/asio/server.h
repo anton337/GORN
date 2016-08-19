@@ -17,8 +17,41 @@
 #include <boost/thread.hpp>
 #include <string>
 #include <vector>
+#include "multithreading/producer_consumer_queue.h"
 
 using boost::asio::ip::tcp;
+
+struct Packet
+{
+    std::string data;
+    Packet ( std::string _data )
+    : data ( _data )
+    {
+
+    }
+};
+
+template < typename Chunk, typename QueueType >
+void collect_packets ( ProducerConsumerQueue < Packet > * packet_queue 
+                     , QueueType                        * _queue
+                     , std::size_t                        max_length
+                     )
+{
+    std::stringstream ss;
+    bool done = false;
+    while ( !done )
+    {
+        Packet * item = packet_queue -> get ();
+        ss << item -> data;
+        if ( item -> data . size () < max_length )
+        {
+            Chunk * o_item = new Chunk ( ss . str () );
+            _queue -> put ( o_item );
+            done = true;
+        }
+        delete item;
+    }
+}
 
 template < typename Chunk, typename QueueType >
 class session
@@ -29,8 +62,13 @@ public:
             )
     : socket_(io_service)
     , queue  (_queue)
+    , packet_queue ( new ProducerConsumerQueue < Packet > (10000) )
     {
-
+        boost::thread t ( collect_packets < Chunk, QueueType > 
+                        , packet_queue
+                        , _queue
+                        , max_length
+                        );
     }
 
     tcp::socket& socket()
@@ -41,7 +79,6 @@ public:
     void start()
     {
         char * data_ = new char[max_length+1];
-        std::vector < std::string > * vec = new std::vector < std::string > ();
         memset ( data_ , 0 , max_length+1 );
         socket_.async_read_some ( boost::asio::buffer ( data_
                                                       , max_length
@@ -51,7 +88,6 @@ public:
                                               , boost::asio::placeholders::error
                                               , data_
                                               , boost::asio::placeholders::bytes_transferred
-                                              , vec
                                               )
                                 );
     }
@@ -60,7 +96,6 @@ private:
     void handle_read ( const boost::system::error_code& error
                      , char * p_data_
                      , size_t bytes_transferred
-                     , std::vector < std::string > * vec
                      )
     {
         if (!error)
@@ -73,7 +108,6 @@ private:
                                                    , this
                                                    , boost::asio::placeholders::error
                                                    , p_data_
-                                                   , vec
                                                    )
                                      );
         }
@@ -85,12 +119,11 @@ private:
 
     void handle_write ( const boost::system::error_code& error 
                       , char * p_data_
-                      , std::vector < std::string > * vec
                       )
     {
         if (!error)
         {
-            vec -> push_back ( std::string ( p_data_ ) );
+            packet_queue -> put ( new Packet ( std::string ( p_data_ ) ) );
             delete [] p_data_;
             char * data_ = new char[max_length+1];
             memset ( data_ , 0 , max_length+1 );
@@ -102,23 +135,8 @@ private:
                                                   , boost::asio::placeholders::error
                                                   , data_
                                                   , boost::asio::placeholders::bytes_transferred
-                                                  , vec
                                                   )
                                     );
-            std::cout << "bytes transferred : " << (size_t)boost::asio::placeholders::bytes_transferred << " / " << max_length << std::endl;
-            if ( (size_t)boost::asio::placeholders::bytes_transferred < max_length )
-            {
-                std::stringstream ss;
-                for ( std::size_t i(0)
-                    ; i < vec -> size ()
-                    ; ++i
-                    )
-                {
-                    ss << (*vec)[i];
-                }
-                queue -> put ( new Chunk( ss . str ( ) ) );
-                // delete vec;
-            }
         }
         else
         {
@@ -127,8 +145,9 @@ private:
     }
 
     tcp::socket socket_;
-    enum { max_length = 32*1024 };
+    enum { max_length = 4*1024 };
     QueueType * queue;
+    ProducerConsumerQueue < Packet > * packet_queue;
 };
 
 template < typename Chunk, typename QueueType >

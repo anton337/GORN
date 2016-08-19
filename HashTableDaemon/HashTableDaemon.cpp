@@ -80,7 +80,11 @@ void consumeItem ( Chunk * item )
             case STORE_TYPE :
             {
                 StoreMessage message;
-                message . deserialize ( item -> message );
+                if ( message . deserialize ( item -> message ) != 0 )
+                {
+                    std::cout << "failed to deserialize store message " << std::endl;
+                    break;
+                }
                 std::vector < std::string > data = message . get_data ();
                 for ( std::size_t i(0)
                     ; i < data.size()
@@ -102,11 +106,38 @@ void consumeItem ( Chunk * item )
                 }
                 break;
             }
+            case FIND_TYPE :
+            {
+                FindMessage message;
+                if ( message . deserialize ( item -> message ) != 0 )
+                {
+                    std::cout << "failed to deserialize find message " << std::endl;
+                }
+                std::vector < std::string > data = message . get_data ();
+                for ( std::size_t i(0)
+                    ; i < data.size()
+                    ; ++i
+                    )
+                {
+                    std::size_t k = atoi ( data[i] . c_str () );
+                    std::size_t index = k % 4; // num_sorting_queue;
+                    if ( index != node_index )
+                    {
+                        std::size_t queue_index = find_chord_connection ( index );
+                        (find_sorting_queue [queue_index]) -> put ( item );
+                    }
+                    else
+                    {
+                        // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
+                        find_output_queue -> put ( item );
+                    }
+                }
+                break;
+            }
             default :
             {
                 // message type not recognized 
-                // std::cout << item -> message << std::endl;
-                std::cout << "ERROR!" << std::endl;
+                std::cout << item -> message << std::endl;
                 break;
             }
         }

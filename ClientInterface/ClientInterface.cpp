@@ -98,6 +98,11 @@ void find_data_thread ( std::string host
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
     client.send(what);
+    FindMessage message;
+    std::vector < std::string > vec;
+    vec . push_back ( what );
+    message . set_data ( vec );
+    client . send ( message . serialize ( 0 , vec . size () ) );
 }
 
 int main ( int argc

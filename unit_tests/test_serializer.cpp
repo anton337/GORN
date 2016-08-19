@@ -131,7 +131,7 @@ bool test_huge_file_serializer_over_network()
 {
     std::vector < std::string > vec;
     for ( std::size_t k(0)
-        ; k < 1000
+        ; k < 10000
         ; ++k
         )
     {
