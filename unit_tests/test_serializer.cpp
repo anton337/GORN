@@ -3,7 +3,6 @@
 #include <iostream>
 #include "serializers/store_message_serialize.h"
 #include "serializers/find_message_serialize.h"
-#include "serializers/find_reply_message_serialize.h"
 
 #include "multithreading/producer_consumer_queue.h"
 #include "asio/client.h"
@@ -44,30 +43,8 @@ bool test_find_message_serializer()
     FindMessage c_find_message;
     connection_info host ( "localhost" , 12345 );
     c_find_message . set_data ( vec );
-    c_find_message . push_host ( host );
     std::string serialized_data = c_find_message . serialize ( 0 , vec . size () );
     return c_find_message . deserialize ( serialized_data ) == 0;
-}
-
-bool test_find_reply_message_serializer()
-{
-    std::vector < std::string > vec;
-    for ( std::size_t k(0)
-        ; k < 10000
-        ; ++k
-        )
-    {
-        std::stringstream ss;
-        ss << rand();
-        vec . push_back ( ss.str() );
-    }
-    std::cout << std::endl;
-    FindReplyMessage c_find_reply_message;
-    connection_info host ( "localhost" , 12345 );
-    c_find_reply_message . set_data ( vec );
-    c_find_reply_message . push_host ( host );
-    std::string serialized_data = c_find_reply_message . serialize ( 0 , vec . size () );
-    return c_find_reply_message . deserialize ( serialized_data ) == 0;
 }
 
 struct Chunk
@@ -180,7 +157,6 @@ int main()
     std::cout << "Welcome to Serializer Unit Test!" << std::endl;
     UnitTest("Test store serialization",test_store_message_serializer);
     UnitTest("Test find serialization" , test_find_message_serializer);
-    UnitTest("Test find reply serialization" , test_find_reply_message_serializer);
     UnitTest("Test serializer over network" , test_serializer_over_network);
     UnitTest("Test huge file serializer over network" , test_huge_file_serializer_over_network);
     return 0;

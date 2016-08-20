@@ -184,7 +184,7 @@ int main ( int argc
                             );
             std::cout << "Done ... " << std::endl;
         }
-        if ( command == "findone" )
+        if ( command == "find" )
         {
             std::string what;
             ss >> what;

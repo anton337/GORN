@@ -144,6 +144,37 @@ void consumeItem ( Chunk * item )
     }
 }
 
+void find_write_output_thread()
+{
+    int batch_num = 0;
+    std::vector < std::string > Q;
+    while ( 1 )
+    {
+        Chunk * item = find_output_queue -> get ();
+        if ( item != NULL )
+        {
+            Q . push_back ( item -> message );
+        }
+        if ( Q . size () > 100000 )
+        {
+            std::cout << "writing to file : " << host . port_no << std::endl;
+            sort_data ( Q );
+            std::stringstream map_ss;
+            map_ss << "sorted_output/" << "comprehensive.out";
+            std::stringstream output_ss;
+            output_ss << "queue_data/" << "queue_" << host . port_no << "_" << batch_num << ".que";
+            search_new ( map_ss . str () 
+                       , Q 
+                       , output_ss . str () 
+                       );
+            Q . clear ();
+            batch_num++;
+        }
+        delete item;
+        item = NULL;
+    }
+}
+
 void write_output_thread()
 {
     int batch_num = 0;
@@ -187,7 +218,10 @@ void consumer_thread()
 }
 
 std::size_t redirection_ind = 0;
-void redirection_thread ( std::string host , std::size_t port , std::vector < std::string > Q ) 
+void redirection_thread ( std::string host 
+                        , std::size_t port 
+                        , std::vector < std::string > Q 
+                        ) 
 {
     std::cout << "redirection ... " << redirection_ind++ << std::endl;
     boost::asio::io_service svc;
@@ -225,6 +259,69 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
     }
 }
 
+std::size_t find_redirection_ind = 0;
+void find_redirection_thread ( std::string host 
+                             , std::size_t port 
+                             , std::vector < std::string > Q 
+                             ) 
+{
+    std::cout << "find redirection ... " << find_redirection_ind++ << std::endl;
+    boost::asio::io_service svc;
+    Client client(svc, host, std::to_string(port));
+    std::size_t k(0);
+    int batch_count = 100;
+    while ( true )
+    {
+        int count = 0;
+        bool done = true;
+        std::vector < std::string > cpy;
+        for ( 
+            ; k < Q.size()
+            ; ++k
+            )
+        {
+            cpy . push_back ( Q[k] );
+            count++;
+            if ( batch_count == count )
+            {
+                FindMessage message;
+                message . set_data ( cpy );
+                client . send ( message . serialize ( 0 , cpy . size () ) );
+                done = false;
+                usleep(10000);
+                break;
+            }
+        }
+        if ( !done ) continue;
+        FindMessage message;
+        message . set_data ( cpy );
+        client . send ( message . serialize ( 0 , cpy . size () ) );
+        usleep(10000);
+        break;
+    }
+}
+
+void find_consumer_redirection_thread(int queue_index)
+{
+    std::vector < std::string > Q;
+    while(1)
+    {
+        Chunk * item = ((find_sorting_queue [queue_index])) -> get ();
+        Q . push_back ( item -> message );
+        if ( Q . size () > 10000 )
+        {
+            boost::thread redirection ( find_redirection_thread
+                                      , connections[queue_index].host_name
+                                      , connections[queue_index].port_no
+                                      , Q
+                                      );
+            Q . clear ();
+        }
+        delete item;
+        item = NULL;
+    }
+}
+
 void consumer_redirection_thread(int queue_index)
 {
     std::vector < std::string > Q;
@@ -246,7 +343,7 @@ void consumer_redirection_thread(int queue_index)
     }
 }
 
-void client_thread ( std::string host , std::size_t port ) 
+void client_testing_connection_thread ( std::string host , std::size_t port ) 
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
@@ -313,7 +410,7 @@ int main(int argc,char * argv[])
         ; ++k
         )
     {
-        threads . push_back ( new boost::thread ( client_thread
+        threads . push_back ( new boost::thread ( client_testing_connection_thread
                                                 , connections[k].host_name
                                                 , connections[k].port_no
                                                 )

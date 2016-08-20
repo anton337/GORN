@@ -58,6 +58,136 @@ void write_file ( std::string                         file_name
     }
 }
 
+void search_new ( std::string                         map_name
+                , std::vector < std::string > const & sorted_data
+                , std::string                         output_name
+                )
+{
+    std::string line;
+    std::string file_line;
+    std::ifstream input  (    map_name . c_str (  ) );
+    std::ofstream output ( output_name . c_str (  ) );
+    std::vector < std::vector < std::string > > check_vec;
+    check_vec . push_back ( sorted_data );
+    std::vector < std::vector < std::string > :: const_iterator > it_vec;
+    for ( std::size_t k(0)
+        ; k < check_vec.size()
+        ; ++k
+        )
+    {
+        it_vec . push_back ( check_vec[k] . begin () );
+    }
+    if (input.is_open())
+    {
+        if (output.is_open())
+        {
+            if ( !input.eof() )
+            {
+                input >> file_line;
+            }
+            std::string prev_line;
+            std::string output_string;
+            std::size_t consecutive_from_vector = 2;
+            bool first_from_vector = true;
+            while(true)
+            {
+                prev_line = line;
+                bool done ( true );
+                bool init ( true );
+                bool output_line ( false );
+                std::size_t max_k(-1);
+                {
+                    for ( std::size_t k(0)
+                        ; k < it_vec.size()
+                        ; ++k
+                        )
+                    {
+                        if ( it_vec[k] != check_vec[k] . end () )
+                        {
+                            if ( init )
+                            {
+                                line = *(it_vec[k]);
+                                max_k = k;
+                                done = false;
+                                init = false;
+                            }
+                            else
+                            {
+                                if ( *(it_vec[k]) < line )
+                                {
+                                    line = *(it_vec[k]);
+                                    max_k = k;
+                                    done = false;
+                                }
+                            }
+                        }
+                    }
+                }
+                if ( input.eof() )
+                {
+                    if ( max_k < it_vec.size() )
+                    {
+                        ++(it_vec[max_k]);
+                        consecutive_from_vector++;
+                        if ( !first_from_vector )
+                        {
+                            {
+                                output_line = true;
+                                output_string = line;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if ( file_line < line )
+                    {
+                        line = file_line;
+                        input >> file_line;
+                        done = false;
+                        consecutive_from_vector = 0;
+                    }
+                    else
+                    {
+                        if ( max_k < it_vec.size() )
+                        {
+                            ++(it_vec[max_k]);
+                            consecutive_from_vector++;
+                            if ( !first_from_vector )
+                            {
+                                if ( consecutive_from_vector > 1 )
+                                {
+                                    output_line = true;
+                                    output_string = prev_line;
+                                }
+                            }
+                        }
+                    }
+                }
+                first_from_vector = false;
+                if ( done )
+                {
+                    break;
+                }
+                if ( output_line )
+                {
+                    output << output_string << " ";
+                }
+            }
+            output.close();
+        } 
+        else
+        {
+            std::cout << "Unable to open file : " << output_name << std::endl;
+        }
+        input.close();
+    }
+    else
+    {
+        std::cout << "Unable to open file : " << map_name << std::endl;
+    }
+}
+
 void sort_write_file ( std::string                                         initial_name
                      , std::vector < std::vector < std::string > > const & sorted_data
                      , std::string                                         comprehensive_name
@@ -115,7 +245,14 @@ void sort_write_file ( std::string                                         initi
                         }
                     }
                 }
-                if ( !input.eof() )
+                if ( input.eof() )
+                {
+                    if ( max_k < it_vec.size() )
+                    {
+                        ++(it_vec[max_k]);
+                    }
+                }
+                else
                 {
                     if ( file_line < line )
                     {
@@ -129,13 +266,6 @@ void sort_write_file ( std::string                                         initi
                         {
                             ++(it_vec[max_k]);
                         }
-                    }
-                }
-                else
-                {
-                    if ( max_k < it_vec.size() )
-                    {
-                        ++(it_vec[max_k]);
                     }
                 }
                 if ( done )
@@ -193,7 +323,9 @@ void remove_file ( std::string file )
     }
 }
 
-void rename_file ( std::string src , std::string dest )
+void rename_file ( std::string src 
+                 , std::string dest 
+                 )
 {
     try
     {

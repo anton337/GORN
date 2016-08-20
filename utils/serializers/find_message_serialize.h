@@ -7,7 +7,6 @@
 class FindMessage : public Serialize
 { 
     std::vector < std::string > m_data;
-    std::vector < connection_info > m_connections;
 public:
 
     FindMessage () : Serialize ()
@@ -18,16 +17,6 @@ public:
     std::vector < std::string > get_data ()
     {
         return m_data;
-    }
-
-    void push_host ( connection_info info )
-    {
-        m_connections . push_back ( info );
-    }
-
-    void pop_host ( connection_info info )
-    {
-        m_connections . pop_back ();
     }
 
     void set_data ( std::vector < std::string > const & p_data )
@@ -46,14 +35,6 @@ public:
     {
         std::stringstream ss;
         ss << get_type () << " ";
-        ss << m_connections . size () << " ";
-        for ( std::size_t k ( 0 )
-            ; k < m_connections . size ()
-            ; ++k
-            )
-        {
-            ss << m_connections[k].host_name << " " << m_connections[k].port_no << " ";
-        }
         std::size_t size ( std::min ( m_data . size () , offset + num ) );
         ss << size << " ";
         for ( std::size_t k ( offset )
@@ -86,26 +67,6 @@ public:
         if ( type != get_type () )
         {
             return 1;
-        }
-        m_connections . clear ();
-        std::size_t num_connections;
-        ss >> num_connections;
-        ss_check_sum << num_connections << " ";
-        for ( std::size_t k ( 0 )
-            ; k < num_connections
-            ; ++k
-            )
-        {
-            std::string connection_host;
-            ss >> connection_host;
-            ss_check_sum << connection_host << " ";
-            std::size_t connection_port;
-            ss >> connection_port;
-            ss_check_sum << connection_port << " ";
-            m_connections . push_back ( connection_info ( connection_host
-                                                        , connection_port
-                                                        )
-                                      );
         }
         std::size_t num;
         ss >> num;
