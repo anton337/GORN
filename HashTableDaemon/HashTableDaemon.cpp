@@ -9,6 +9,7 @@
 #include "data/data.h"
 #include "info.h"
 #include "serializers/store_message_serialize.h"
+#include "serializers/find_message_serialize.h"
 
 void wait(int seconds)
 {
@@ -21,17 +22,12 @@ host_info host;
 
 std::vector < connection_info > connections;
 
-enum MessageType { UNDEFINED = -1, STORE = 0 , FIND = 1 };
-
 struct Chunk
 {
     std::string message;
-    MessageType type;
     Chunk ( std::string _message 
-          , MessageType _type   = UNDEFINED
           )
     : message ( _message )
-    ,   type  (    _type )
     {
 
     }
@@ -43,7 +39,11 @@ ProducerConsumerQueue < Chunk > * Queue = new ProducerConsumerQueue < Chunk > (B
 
 ProducerConsumerQueue < Chunk > * * sorting_queue;
 
+ProducerConsumerQueue < Chunk > * * find_sorting_queue;
+
 ProducerConsumerQueue < Chunk > * output_queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
+
+ProducerConsumerQueue < Chunk > * find_output_queue = new ProducerConsumerQueue < Chunk > (BUFFER_SIZE);
 
 std::size_t num_sorting_queue = -1;
 
@@ -96,12 +96,12 @@ void consumeItem ( Chunk * item )
                     if ( index != node_index )
                     {
                         std::size_t queue_index = find_chord_connection ( index );
-                        (sorting_queue [queue_index]) -> put ( item );
+                        (sorting_queue [queue_index]) -> put ( new Chunk ( data[i] ) );
                     }
                     else
                     {
                         // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
-                        output_queue -> put ( item );
+                        output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
                 break;
@@ -124,12 +124,12 @@ void consumeItem ( Chunk * item )
                     if ( index != node_index )
                     {
                         std::size_t queue_index = find_chord_connection ( index );
-                        (find_sorting_queue [queue_index]) -> put ( item );
+                        (find_sorting_queue [queue_index]) -> put ( new Chunk ( data[i] ) );
                     }
                     else
                     {
                         // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
-                        find_output_queue -> put ( item );
+                        find_output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
                 break;
@@ -165,6 +165,8 @@ void write_output_thread()
             Q . clear ();
             batch_num++;
         }
+        delete item;
+        item = NULL;
     }
 }
 
@@ -179,6 +181,8 @@ void consumer_thread()
             continue;
         }
         consumeItem(item);
+        delete item;
+        item = NULL;
     }
 }
 
@@ -208,7 +212,7 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
                 message . set_data ( cpy );
                 client . send ( message . serialize ( 0 , cpy . size () ) );
                 done = false;
-                usleep(100);
+                usleep(10000);
                 break;
             }
         }
@@ -216,7 +220,7 @@ void redirection_thread ( std::string host , std::size_t port , std::vector < st
         StoreMessage message;
         message . set_data ( cpy );
         client . send ( message . serialize ( 0 , cpy . size () ) );
-        usleep(100);
+        usleep(10000);
         break;
     }
 }
@@ -237,6 +241,8 @@ void consumer_redirection_thread(int queue_index)
                                       );
             Q . clear ();
         }
+        delete item;
+        item = NULL;
     }
 }
 
@@ -244,7 +250,7 @@ void client_thread ( std::string host , std::size_t port )
 {
     boost::asio::io_service svc;
     Client client(svc, host, std::to_string(port));
-    client.send("Clinet Testing Connection ... \n");
+    client.send("Client Testing Connection ... \n");
     client.send("Done Testing ... \n");
 }
 
@@ -279,6 +285,7 @@ int main(int argc,char * argv[])
 
 
     sorting_queue = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
+    find_sorting_queue = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
     num_sorting_queue = connections . size ();
     for ( std::size_t k(0)
         ; k < connections.size()

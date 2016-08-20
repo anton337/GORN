@@ -10,6 +10,7 @@
 #include "asio/server.h"
 #include "info.h"
 #include "serializers/store_message_serialize.h"
+#include "serializers/find_message_serialize.h"
 
 void read_file ( std::string file_name 
                , std::stringstream * output_ss 
@@ -76,7 +77,7 @@ void push_data_thread ( std::string host
                 message . set_data ( cpy );
                 client . send ( message . serialize ( 0 , cpy . size () ) );
                 done = false;
-                usleep(100);
+                usleep(10000);
                 break;
             }
         }
@@ -84,7 +85,7 @@ void push_data_thread ( std::string host
         StoreMessage message;
         message . set_data ( cpy );
         client . send ( message . serialize ( 0 , cpy . size () ) );
-        usleep(100);
+        usleep(10000);
         break;
     }
     delete ss;

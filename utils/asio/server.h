@@ -24,51 +24,84 @@ using boost::asio::ip::tcp;
 struct Packet
 {
     std::string data;
-    Packet ( std::string _data )
-    : data ( _data )
+    std::size_t index;
+    Packet ( std::string _data 
+           , std::size_t _index
+           )
+    : data  ( _data  )
+    , index ( _index )
     {
 
     }
 };
 
+bool packet_comparator ( Packet a , Packet b )
+{
+    return a . index < b . index ;
+}
+
 template < typename Chunk, typename QueueType >
 void collect_packets ( ProducerConsumerQueue < Packet > * packet_queue 
                      , QueueType                        * _queue
                      , std::size_t                        max_length
+                     , bool                             * destroyed
                      )
 {
-    std::stringstream ss;
-    bool done = false;
-    while ( !done )
+    while ( !(*destroyed) )
     {
-        Packet * item = packet_queue -> get ();
-        ss << item -> data;
-        if ( item -> data . size () < max_length )
+        std::stringstream ss;
+        std::vector < Packet > vec;
+        bool done = false;
+        while ( !done )
         {
-            Chunk * o_item = new Chunk ( ss . str () );
-            _queue -> put ( o_item );
-            done = true;
+            Packet * item = packet_queue -> get ();
+            vec . push_back ( *item );
+            if ( item -> data . size () < max_length )
+            {
+                std::sort ( vec . begin () , vec . end () , packet_comparator );
+                for ( std::size_t k(0)
+                    ; k < vec . size ()
+                    ; ++k
+                    )
+                {
+                    ss << vec[k] . data;
+                }
+                Chunk * o_item = new Chunk ( ss . str () );
+                _queue -> put ( o_item );
+                done = true;
+            }
+            delete item;
+            item = NULL;
         }
-        delete item;
     }
+    delete packet_queue;
 }
 
 template < typename Chunk, typename QueueType >
 class session
 {
+    bool * destroyed;
+    boost::thread * t;
 public:
     session ( boost::asio::io_service& io_service
             , QueueType * _queue
             )
     : socket_(io_service)
     , queue  (_queue)
-    , packet_queue ( new ProducerConsumerQueue < Packet > (10000) )
+    , packet_queue ( new ProducerConsumerQueue < Packet > (10000000) )
     {
-        boost::thread t ( collect_packets < Chunk, QueueType > 
-                        , packet_queue
-                        , _queue
-                        , max_length
-                        );
+        destroyed = new bool(false);
+        t = new boost::thread ( collect_packets < Chunk, QueueType > 
+                              , packet_queue
+                              , _queue
+                              , max_length
+                              , destroyed
+                              );
+    }
+
+    ~session ()
+    {
+
     }
 
     tcp::socket& socket()
@@ -88,6 +121,7 @@ public:
                                               , boost::asio::placeholders::error
                                               , data_
                                               , boost::asio::placeholders::bytes_transferred
+                                              , 1
                                               )
                                 );
     }
@@ -95,7 +129,8 @@ public:
 private:
     void handle_read ( const boost::system::error_code& error
                      , char * p_data_
-                     , size_t bytes_transferred
+                     , std::size_t bytes_transferred
+                     , std::size_t index
                      )
     {
         if (!error)
@@ -108,6 +143,7 @@ private:
                                                    , this
                                                    , boost::asio::placeholders::error
                                                    , p_data_
+                                                   , index+1
                                                    )
                                      );
         }
@@ -119,11 +155,12 @@ private:
 
     void handle_write ( const boost::system::error_code& error 
                       , char * p_data_
+                      , std::size_t index
                       )
     {
         if (!error)
         {
-            packet_queue -> put ( new Packet ( std::string ( p_data_ ) ) );
+            packet_queue -> put ( new Packet ( std::string ( p_data_ ) , index ) );
             delete [] p_data_;
             char * data_ = new char[max_length+1];
             memset ( data_ , 0 , max_length+1 );
@@ -135,6 +172,7 @@ private:
                                                   , boost::asio::placeholders::error
                                                   , data_
                                                   , boost::asio::placeholders::bytes_transferred
+                                                  , index+1
                                                   )
                                     );
         }
