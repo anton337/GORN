@@ -1,5 +1,6 @@
 #include "unit_test.h"
 #include "data/data.h"
+#include "hash/hash.h"
 #include <sstream>
 
 bool test_find()

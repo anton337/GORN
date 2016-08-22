@@ -46,7 +46,7 @@ class ProducerConsumerQueue
         return item;
     }
 
-    ProducerConsumerQueue ( int BUFFER_SIZE )
+    ProducerConsumerQueue ( std::size_t BUFFER_SIZE )
     {
         emptyCount = new semaphore(BUFFER_SIZE);
         fillCount = new semaphore(0);
