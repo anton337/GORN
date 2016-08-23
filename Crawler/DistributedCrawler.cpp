@@ -7,8 +7,11 @@
 #include "multithreading/producer_consumer_queue.h"
 #include "data/queue_file.h"
 #include "hash/hash.h"
+#include "info.h"
+#include "serializers/store_message_serialize.h"
+#include "serializers/find_message_serialize.h"
 
-host_info host;
+host_info server_host;
 
 struct node
 {
@@ -62,7 +65,7 @@ int  get_connections ( std::string host
 {
     boost::asio::io_service svc;
     int port = 80;
-    Client client(svc, host, std::to_string(port));
+    Client client(svc, host , std::to_string ( port ) );
     std::string request ( "GET "+dir+" HTTP/1.1\r\nHost: "+host+"\r\nConnection: close\r\n\r\n" );
     //std::cout << request << std::endl;
     std::string output = client . send_complete ( request );
@@ -90,11 +93,11 @@ int  get_connections ( std::string host
                     //std::cout << host << " " << dir << std::endl;
                     if ( Q -> size () < 1000 )
                     {
-                        Q -> put ( new node ( host , "/"+dir , parent ) );
+                        Q -> put ( new node ( host , "/"+dir ) );
                     }
                     else
                     {
-                        Z -> put ( new node ( host , "/"+dir , parent ) );
+                        Z -> put ( new node ( host , "/"+dir ) );
                     }
                 }
                 else
@@ -104,11 +107,11 @@ int  get_connections ( std::string host
                     //std::cout << host << std::endl;
                     if ( Q -> size () < 1000 )
                     {
-                        Q -> put ( new node ( host , "/" , parent ) );
+                        Q -> put ( new node ( host , "/" ) );
                     }
                     else
                     {
-                        Z -> put ( new node ( host , "/"+dir , parent ) );
+                        Z -> put ( new node ( host , "/"+dir ) );
                     }
                 }
             }
@@ -123,23 +126,12 @@ int  get_connections ( std::string host
 
 // QueueFile queue_file ( "queue_data/" );
 
-struct node
-{
-    std::vector < std::string > vec;
-    node ( std::vector < std::string > _vec
-          )
-    : vec ( _vec )
-    {
-
-    }
-};
-
 ProducerConsumerQueue < node > * map_queue = new ProducerConsumerQueue < node > ( -1 );
 
 void push_map ( std::vector < std::string > const & vec )
 {
     boost::asio::io_service svc;
-    Client client(svc, host . host, std::to_string(host . port));
+    Client client(svc, server_host . host_name , std::to_string( server_host . port_no ));
     int batch_count = 100;
     std::size_t k(0);
     while ( true )
@@ -171,7 +163,6 @@ void push_map ( std::vector < std::string > const & vec )
         usleep(10000);
         break;
     }
-    delete ss;
 }
 
 void save_map ()
@@ -194,7 +185,7 @@ void save_map ()
 void push_list ( std::vector < std::string > const & vec )
 {
     boost::asio::io_service svc;
-    Client client(svc, host . host, std::to_string(host . port));
+    Client client(svc, server_host . host_name , std::to_string ( server_host . port_no ) );
     int batch_count = 100;
     std::size_t k(0);
     while ( true )
@@ -226,7 +217,6 @@ void push_list ( std::vector < std::string > const & vec )
         usleep(10000);
         break;
     }
-    delete ss;
 }
 
 void save_list ()
@@ -268,7 +258,6 @@ void connections_thread ()
                         {
                             proceed = true;
                             std::cout << n -> host << n->dir << " : " << Q -> size () << " : " << M . size () << std::endl;
-                            map_size = M . size ();
                             map_queue -> put ( n );
                         }
                     }
@@ -307,17 +296,18 @@ int main(int argc,char **argv)
 
     std::vector < connection_info > connections;
     parse_config_file ( config_file 
-                      , host 
+                      , server_host 
                       , connections 
                       );
 
-    std::cout << "port no : " << host . port_no << std::endl;
+    std::cout << "host name : " << server_host . host_name << std::endl;
+    std::cout << "port no : " << server_host . port_no << std::endl;
 
-    Q -> put ( new node ( "www.ask.com" , "/" , NULL ) );
-    Q -> put ( new node ( "www.google.com" , "/" , NULL ) );
-    Q -> put ( new node ( "www.facebook.com" , "/" , NULL ) );
-    Q -> put ( new node ( "www.youtube.com" , "/" , NULL ) );
-    Q -> put ( new node ( "www.bing.com" , "/" , NULL ) );
+    Q -> put ( new node ( "www.ask.com" , "/" ) );
+    Q -> put ( new node ( "www.google.com" , "/" ) );
+    Q -> put ( new node ( "www.facebook.com" , "/" ) );
+    Q -> put ( new node ( "www.youtube.com" , "/" ) );
+    Q -> put ( new node ( "www.bing.com" , "/" ) );
     std::vector < boost::thread * > threads;
     for ( std::size_t k(0)
         ; k < 4

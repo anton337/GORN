@@ -95,12 +95,13 @@ void consumeItem ( Chunk * item )
                     std::size_t index = k % 4; // num_sorting_queue;
                     if ( index != node_index )
                     {
+                        std::cout << "index : " << index << std::endl;
                         std::size_t queue_index = find_chord_connection ( index );
                         (sorting_queue [queue_index]) -> put ( new Chunk ( data[i] ) );
                     }
                     else
                     {
-                        // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
+                        std::cout << host.port_no << " - " << index << " : " << ++num_received <<  " : " << data[i] << std::endl;
                         output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
