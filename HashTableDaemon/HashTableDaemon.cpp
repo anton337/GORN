@@ -156,7 +156,7 @@ void find_write_output_thread()
         {
             Q . push_back ( item -> message );
         }
-        if ( Q . size () > 100000 )
+        if ( Q . size () > 100 /*100000*/ )
         {
             std::cout << "writing to file : " << host . port_no << std::endl;
             sort_data ( Q );
@@ -187,7 +187,7 @@ void write_output_thread()
         {
             Q . push_back ( item -> message );
         }
-        if ( Q . size () > 100000 )
+        if ( Q . size () > 100 /*100000*/ )
         {
             std::cout << "writing to file : " << host . port_no << std::endl;
             sort_data ( Q );
