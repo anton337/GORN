@@ -149,7 +149,7 @@ void save_map ()
     {
         node * item = map_queue -> get ();
         vec . push_back ( item -> host + item -> dir );
-        delete item;
+        // delete item;
         if ( vec . size () > batch_size )
         {
             push_map ( vec );
@@ -203,7 +203,7 @@ void save_list ()
     {
         node * item = Z -> get ();
         vec . push_back ( item -> host + item -> dir );
-        delete item;
+        // delete item;
         if ( vec . size () > batch_size )
         {
             push_list ( vec );
@@ -249,7 +249,7 @@ void connections_thread ()
                     std::cout << "n_connections : " << n_connections << std::endl;
                 }
             }
-            delete n;
+            // delete n;
         }
         catch ( std::exception & e )
         {
