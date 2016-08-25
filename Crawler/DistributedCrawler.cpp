@@ -39,22 +39,6 @@ boost::mutex * _mutex = new boost::mutex ();
 std::set < node * , NodeComparator > M;
 ProducerConsumerQueue < node > * Q = new ProducerConsumerQueue < node > ( -1 );
 ProducerConsumerQueue < node > * Z = new ProducerConsumerQueue < node > ( -1 );
-node * min_pt = NULL;
-
-int width  = 1000;
-int height = 1000;
-
-int mouse_x = 0;
-int mouse_y = 0;
-
-double m_mouse_x = 0;
-double m_mouse_y = 0;
-
-float camera_x = 0;
-float camera_y = 0;
-float camera_z = 0;
-
-bool pick = false;
 
 int  get_connections ( std::string host
                      , std::string dir
@@ -67,9 +51,7 @@ int  get_connections ( std::string host
     int port = 80;
     Client client(svc, host , std::to_string ( port ) );
     std::string request ( "GET "+dir+" HTTP/1.1\r\nHost: "+host+"\r\nConnection: close\r\n\r\n" );
-    //std::cout << request << std::endl;
     std::string output = client . send_complete ( request );
-    //std::cout << output << std::endl;
     std::size_t n_links = 0;
     {
         std::size_t pos = 0;
@@ -89,8 +71,6 @@ int  get_connections ( std::string host
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
                     std::string dir  = str . substr ( host_end+1 );
-                    //std::cout << "found : " << str << std::endl;
-                    //std::cout << host << " " << dir << std::endl;
                     if ( Q -> size () < 1000 )
                     {
                         Q -> put ( new node ( host , "/"+dir ) );
@@ -103,15 +83,13 @@ int  get_connections ( std::string host
                 else
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
-                    //std::cout << "found : " << str << std::endl;
-                    //std::cout << host << std::endl;
                     if ( Q -> size () < 1000 )
                     {
                         Q -> put ( new node ( host , "/" ) );
                     }
                     else
                     {
-                        Z -> put ( new node ( host , "/"+dir ) );
+                        Z -> put ( new node ( host , "/" ) );
                     }
                 }
             }
@@ -123,8 +101,6 @@ int  get_connections ( std::string host
     }
     return n_links;
 }
-
-// QueueFile queue_file ( "queue_data/" );
 
 ProducerConsumerQueue < node > * map_queue = new ProducerConsumerQueue < node > ( -1 );
 
@@ -282,6 +258,57 @@ void connections_thread ()
     }
 }
 
+QueueFile queue_file ( "queue_data/" );
+
+void fetch_data_from_queue_thread ()
+{
+    while ( true )
+    {
+        try 
+        {
+            if ( Q -> size () < 200 )
+            {
+                std::vector < QueueEntry > vec;
+                queue_file . Peek ( vec );
+                for ( std::size_t k(0)
+                    ; k < vec . size ()
+                    ; ++k
+                    )
+                {
+                    std::string str = vec[k] . value;
+                    std::cout << "fetching item : " << vec[k] . value << std::endl;
+                    std::size_t host_start = str . find ( "/" , 0          ) + 2;
+                    std::size_t host_end   = str . find ( "/" , host_start );
+                    if ( host_start != std::string::npos
+                       )
+                    {
+                        if ( host_end != std::string::npos
+                           )
+                        {
+                            std::string host = str . substr ( host_start , host_end - host_start );
+                            std::string dir  = str . substr ( host_end+1 );
+                            {
+                                Q -> put ( new node ( host , "/"+dir ) );
+                            }
+                        }
+                        else
+                        {
+                            std::string host = str . substr ( host_start , host_end - host_start );
+                            {
+                                Q -> put ( new node ( host , "/" ) );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch ( std::exception & e )
+        {
+            std::cout << "Exception : " << e . what () << std::endl;
+        }
+    }
+}
+
 int main(int argc,char **argv)
 {
     srand(time(NULL));
@@ -316,6 +343,9 @@ int main(int argc,char **argv)
     {
         threads . push_back ( new boost::thread ( connections_thread ) );
     }
+    threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
+    threads . push_back ( new boost::thread ( save_list                    ) );
+    threads . push_back ( new boost::thread ( save_map                     ) );
     for ( std::size_t k(0)
         ; k < threads . size ()
         ; ++k

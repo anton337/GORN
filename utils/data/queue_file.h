@@ -89,6 +89,31 @@ public:
         }
     }
 
+    void Peek ( std::vector < QueueEntry > & output )
+    {
+        bool status = false;
+        while ( !status )
+        {
+            std::vector < std::string > files;
+            get_files ( m_directory_name 
+                      , files 
+                      );
+            if ( files . size () > 0 )
+            {
+                if ( peek ( files[0] 
+                          , output 
+                          )
+                     == 0 
+                   )
+                {
+                    status = true;
+                    continue;
+                }
+            }
+            usleep(500000);
+        }
+    }
+
 private:
 
     int lock ()
@@ -201,6 +226,38 @@ private:
             std::cout << "Unable to open file : " << file_name << std::endl; 
         }
         boost::filesystem::remove ( file_name );
+        Unlock();
+        return 0;
+    }
+
+    int peek ( std::string                  file_name
+             , std::vector < QueueEntry > & output
+             )
+    {
+        // since we are going to remove the file, once it is in memory,
+        // and we don't want other threads to contain duplicate data,
+        // we want to lock the directory before reading this file
+        if ( lock () == 1 ) return 1;
+        std::string line;
+        std::ifstream myfile (file_name.c_str());
+        if (myfile.is_open())
+        {
+            while ( getline ( myfile , line ) )
+            {
+                std::stringstream ss;
+                ss << line;
+                std::size_t key;
+                ss >> key;
+                std::string value;
+                ss >> value;
+                output . push_back ( QueueEntry ( key , value ) );
+            }
+            myfile.close();
+        }
+        else
+        {
+            std::cout << "Unable to open file : " << file_name << std::endl; 
+        }
         Unlock();
         return 0;
     }
