@@ -10,6 +10,7 @@
 #include "info.h"
 #include "serializers/store_message_serialize.h"
 #include "serializers/find_message_serialize.h"
+#include "data/distributed_mutex.h"
 
 void wait(int seconds)
 {
@@ -145,6 +146,10 @@ void consumeItem ( Chunk * item )
     }
 }
 
+DistributedMutex c_mutex ( "sorted_output/unlocked"
+                         , "sorted_output/locked"
+                         );
+
 void find_write_output_thread()
 {
     int batch_num = 0;
@@ -158,6 +163,7 @@ void find_write_output_thread()
         }
         if ( Q . size () > 100 /*100000*/ )
         {
+            if ( c_mutex . Lock () == 1 ) continue;
             std::cout << "writing to file : " << host . port_no << std::endl;
             sort_data ( Q );
             std::stringstream map_ss;
@@ -170,6 +176,7 @@ void find_write_output_thread()
                        );
             Q . clear ();
             batch_num++;
+            c_mutex . Unlock ();
         }
         delete item;
         item = NULL;

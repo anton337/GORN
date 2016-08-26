@@ -271,12 +271,12 @@ void connections_thread ()
                 }
                 if ( proceed )
                 {
-                    int n_connections = get_connections_fake ( n -> host 
-                                                             , n -> dir
-                                                             , n
-                                                             , Q
-                                                             , Z
-                                                             );
+                    int n_connections = get_connections ( n -> host 
+                                                        , n -> dir
+                                                        , n
+                                                        , Q
+                                                        , Z
+                                                        );
                     std::cout << "n_connections : " << n_connections << std::endl;
                 }
             }
