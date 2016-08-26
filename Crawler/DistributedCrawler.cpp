@@ -102,6 +102,37 @@ int  get_connections ( std::string host
     return n_links;
 }
 
+int  get_connections_fake ( std::string host
+                          , std::string dir
+                          , node * parent
+                          , ProducerConsumerQueue < node > * Q
+                          , ProducerConsumerQueue < node > * Z
+                          )
+{
+    std::size_t n_links ( (rand()%100==1)?10000:rand()%3 );
+    for ( std::size_t k(0)
+        ; k < n_links
+        ; ++k
+        )
+    {
+        std::stringstream host_ss;
+        host_ss << host << rand();
+        std::string host ( host_ss . str () );
+        std::stringstream dir_ss;
+        dir_ss << dir << rand();
+        std::string dir ( dir_ss . str () );
+        if ( Q -> size () < 1000 )
+        {
+            Q -> put ( new node ( host , dir ) );
+        }
+        else
+        {
+            Z -> put ( new node ( host , dir ) );
+        }
+    }
+    return n_links;
+}
+
 ProducerConsumerQueue < node > * map_queue = new ProducerConsumerQueue < node > ( -1 );
 
 void push_map ( std::vector < std::string > const & vec )
@@ -240,12 +271,12 @@ void connections_thread ()
                 }
                 if ( proceed )
                 {
-                    int n_connections = get_connections ( n -> host 
-                                                        , n -> dir
-                                                        , n
-                                                        , Q
-                                                        , Z
-                                                        );
+                    int n_connections = get_connections_fake ( n -> host 
+                                                             , n -> dir
+                                                             , n
+                                                             , Q
+                                                             , Z
+                                                             );
                     std::cout << "n_connections : " << n_connections << std::endl;
                 }
             }
@@ -258,7 +289,7 @@ void connections_thread ()
     }
 }
 
-QueueFile queue_file ( "queue_data/" );
+QueueFile < QueueEntryValue > queue_file ( "queue_data/" );
 
 void fetch_data_from_queue_thread ()
 {
@@ -268,8 +299,8 @@ void fetch_data_from_queue_thread ()
         {
             if ( Q -> size () < 200 )
             {
-                std::vector < QueueEntry > vec;
-                queue_file . Peek ( vec );
+                std::vector < QueueEntryValue > vec;
+                queue_file . Pop ( vec );
                 for ( std::size_t k(0)
                     ; k < vec . size ()
                     ; ++k
@@ -343,9 +374,9 @@ int main(int argc,char **argv)
     {
         threads . push_back ( new boost::thread ( connections_thread ) );
     }
-    threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
     threads . push_back ( new boost::thread ( save_list                    ) );
-    threads . push_back ( new boost::thread ( save_map                     ) );
+    threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
+    // threads . push_back ( new boost::thread ( save_map                     ) );
     for ( std::size_t k(0)
         ; k < threads . size ()
         ; ++k

@@ -101,7 +101,7 @@ void consumeItem ( Chunk * item )
                     }
                     else
                     {
-                        std::cout << host.port_no << " - " << index << " : " << ++num_received <<  " : " << data[i] << std::endl;
+                        std::cout << "store : " << host.port_no << " - " << index << " : " << ++num_received <<  " : " << data[i] << std::endl;
                         output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
@@ -129,7 +129,7 @@ void consumeItem ( Chunk * item )
                     }
                     else
                     {
-                        // std::cout << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
+                        std::cout << "find : " << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
                         find_output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
@@ -417,6 +417,8 @@ int main(int argc,char * argv[])
                                                 )
                             );
     }
+
+    threads . push_back ( new boost::thread ( find_write_output_thread ) );
 
     std::cout << "join" << std::endl;
     for ( std::size_t k(0)

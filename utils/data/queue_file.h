@@ -8,23 +8,11 @@
 #include <sstream>
 #include <algorithm>
 #include "boost/filesystem.hpp"
+#include "queue_entry.h"
 
 #include "data.h"
 
-struct QueueEntry
-{
-    std::size_t key;
-    std::string value;
-    QueueEntry ( std::size_t _key
-               , std::string _value
-               )
-    : key   ( _key   )
-    , value ( _value )
-    {
-
-    }
-};
-
+template < typename QueueEntry >
 class QueueFile
 {
     std::string m_directory_name;
@@ -213,11 +201,7 @@ private:
             {
                 std::stringstream ss;
                 ss << line;
-                std::size_t key;
-                ss >> key;
-                std::string value;
-                ss >> value;
-                output . push_back ( QueueEntry ( key , value ) );
+                output . push_back ( QueueEntry ( line ) );
             }
             myfile.close();
         }
@@ -246,11 +230,7 @@ private:
             {
                 std::stringstream ss;
                 ss << line;
-                std::size_t key;
-                ss >> key;
-                std::string value;
-                ss >> value;
-                output . push_back ( QueueEntry ( key , value ) );
+                output . push_back ( QueueEntry ( line ) );
             }
             myfile.close();
         }

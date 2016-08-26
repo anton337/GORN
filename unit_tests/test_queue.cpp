@@ -7,17 +7,17 @@
 
 bool test_file_queue ()
 {
-    QueueFile queue_file ( "unit_tests/queue_data/" );
-    std::vector < QueueEntry > vec;
+    QueueFile < QueueEntryKeyValue > queue_file ( "unit_tests/queue_data/" );
+    std::vector < QueueEntryKeyValue > vec;
     {
-        vec . push_back ( QueueEntry ( 1 , "hello"  ) );
-        vec . push_back ( QueueEntry ( 2 , "how"    ) );
-        vec . push_back ( QueueEntry ( 3 , "are"    ) );
-        vec . push_back ( QueueEntry ( 4 , "you"    ) );
-        vec . push_back ( QueueEntry ( 5 , "?"      ) );
+        vec . push_back ( QueueEntryKeyValue ( 1 , "hello"  ) );
+        vec . push_back ( QueueEntryKeyValue ( 2 , "how"    ) );
+        vec . push_back ( QueueEntryKeyValue ( 3 , "are"    ) );
+        vec . push_back ( QueueEntryKeyValue ( 4 , "you"    ) );
+        vec . push_back ( QueueEntryKeyValue ( 5 , "?"      ) );
     }
     queue_file . Push ( "file1" , vec );
-    std::vector < QueueEntry > out_vec;
+    std::vector < QueueEntryKeyValue > out_vec;
     queue_file . Pop ( out_vec );
     for ( std::size_t k(0)
         ; k < out_vec . size ()
@@ -29,16 +29,16 @@ bool test_file_queue ()
     return true;
 }
 
-void pop ( std::vector < QueueEntry > * vec
-         , QueueFile                    queue_file
+void pop ( std::vector < QueueEntryKeyValue > * vec
+         , QueueFile   < QueueEntryKeyValue >   queue_file
          )
 {
     queue_file . Pop ( *vec );
 }
 
-void push ( std::vector < QueueEntry > vec
-          , std::string                file_name
-          , QueueFile                  queue_file
+void push ( std::vector < QueueEntryKeyValue > vec
+          , std::string                        file_name
+          , QueueFile   < QueueEntryKeyValue > queue_file
           )
 {
     queue_file . Push ( file_name , vec );
@@ -47,9 +47,9 @@ void push ( std::vector < QueueEntry > vec
 bool test_file_queue_parallel_test ()
 {
     std::size_t n_threads = 20;
-    QueueFile queue_file ( "unit_tests/queue_data/" );
+    QueueFile < QueueEntryKeyValue> queue_file ( "unit_tests/queue_data/" );
     std::vector < boost::thread * > threads;
-    std::vector < QueueEntry > vec;
+    std::vector < QueueEntryKeyValue > vec;
     std::size_t check_sum_1 = 0;
     for ( std::size_t k(0)
         ; k < 10000
@@ -59,7 +59,7 @@ bool test_file_queue_parallel_test ()
         std::stringstream ss;
         std::size_t num = rand();
         ss << num;
-        vec . push_back ( QueueEntry ( k , ss.str() ) );
+        vec . push_back ( QueueEntryKeyValue ( k , ss.str() ) );
         check_sum_1 += num;
     }
     std::cout << "push" << std::endl;
@@ -77,7 +77,7 @@ bool test_file_queue_parallel_test ()
                                                 ) 
                             );
     }
-    std::vector < QueueEntry > out_vec;
+    std::vector < QueueEntryKeyValue > out_vec;
     std::cout << "pop" << std::endl;
     for ( std::size_t file(0)
         ; file < n_threads
