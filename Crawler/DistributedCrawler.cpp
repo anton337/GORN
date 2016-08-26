@@ -375,7 +375,7 @@ int main(int argc,char **argv)
         threads . push_back ( new boost::thread ( connections_thread ) );
     }
     threads . push_back ( new boost::thread ( save_list                    ) );
-    threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
+    // threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
     // threads . push_back ( new boost::thread ( save_map                     ) );
     for ( std::size_t k(0)
         ; k < threads . size ()

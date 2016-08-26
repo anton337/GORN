@@ -161,6 +161,8 @@ void find_write_output_thread()
         {
             Q . push_back ( item -> message );
         }
+        delete item;
+        item = NULL;
         if ( Q . size () > 100 /*100000*/ )
         {
             if ( c_mutex . Lock () == 1 ) continue;
@@ -178,8 +180,6 @@ void find_write_output_thread()
             batch_num++;
             c_mutex . Unlock ();
         }
-        delete item;
-        item = NULL;
     }
 }
 
