@@ -47,6 +47,7 @@ int  get_connections ( std::string host
                      , ProducerConsumerQueue < node > * Z
                      )
 {
+    HashGenerator hash;
     boost::asio::io_service svc;
     int port = 80;
     Client client(svc, host , std::to_string ( port ) );
@@ -71,25 +72,31 @@ int  get_connections ( std::string host
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
                     std::string dir  = str . substr ( host_end+1 );
-                    if ( Q -> size () < 1000 )
+                    if ( hash . validate ( host + "/"+dir ) )
                     {
-                        Q -> put ( new node ( host , "/"+dir ) );
-                    }
-                    else
-                    {
-                        Z -> put ( new node ( host , "/"+dir ) );
+                        if ( Q -> size () < 1000 )
+                        {
+                            Q -> put ( new node ( host , "/"+dir ) );
+                        }
+                        else
+                        {
+                            Z -> put ( new node ( host , "/"+dir ) );
+                        }
                     }
                 }
                 else
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
-                    if ( Q -> size () < 1000 )
+                    if ( hash . validate ( host ) )
                     {
-                        Q -> put ( new node ( host , "/" ) );
-                    }
-                    else
-                    {
-                        Z -> put ( new node ( host , "/" ) );
+                        if ( Q -> size () < 1000 )
+                        {
+                            Q -> put ( new node ( host , "/" ) );
+                        }
+                        else
+                        {
+                            Z -> put ( new node ( host , "/" ) );
+                        }
                     }
                 }
             }
@@ -265,19 +272,22 @@ void connections_thread ()
                         {
                             proceed = true;
                             std::cout << n -> host << n->dir << " : " << Q -> size () << " : " << M . size () << std::endl;
-                            map_queue -> put ( n );
                         }
                     }
                 }
                 if ( proceed )
                 {
-                    int n_connections = get_connections_fake ( n -> host 
+                    int n_connections = get_connections ( n -> host 
                                                         , n -> dir
                                                         , n
                                                         , Q
                                                         , Z
                                                         );
                     std::cout << "n_connections : " << n_connections << std::endl;
+                    if ( n_connections > 0 )
+                    {
+                        map_queue -> put ( n );
+                    }
                 }
             }
             // delete n;
@@ -376,7 +386,7 @@ int main(int argc,char **argv)
     }
     threads . push_back ( new boost::thread ( save_list                    ) );
     threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
-    // threads . push_back ( new boost::thread ( save_map                     ) );
+    threads . push_back ( new boost::thread ( save_map                     ) );
     for ( std::size_t k(0)
         ; k < threads . size ()
         ; ++k

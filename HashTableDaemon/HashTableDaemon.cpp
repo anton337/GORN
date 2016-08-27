@@ -114,6 +114,7 @@ void consumeItem ( Chunk * item )
                 if ( message . deserialize ( item -> message ) != 0 )
                 {
                     std::cout << "failed to deserialize find message " << std::endl;
+                    break;
                 }
                 std::vector < std::string > data = message . get_data ();
                 for ( std::size_t i(0)
@@ -394,7 +395,7 @@ int main(int argc,char * argv[])
                       );
 
 
-    sorting_queue = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
+    sorting_queue      = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
     find_sorting_queue = new ProducerConsumerQueue < Chunk > * [ connections . size () ];
     num_sorting_queue = connections . size ();
     for ( std::size_t k(0)
@@ -402,8 +403,13 @@ int main(int argc,char * argv[])
         ; ++k
         )
     {
-        sorting_queue[k] =  ( new ProducerConsumerQueue < Chunk > ( BUFFER_SIZE ) );
+        sorting_queue      [k] =  ( new ProducerConsumerQueue < Chunk > ( BUFFER_SIZE ) );
+        find_sorting_queue [k] =  ( new ProducerConsumerQueue < Chunk > ( BUFFER_SIZE ) );
         threads . push_back ( new boost::thread ( consumer_redirection_thread
+                                                , k
+                                                )
+                            );
+        threads . push_back ( new boost::thread ( find_consumer_redirection_thread
                                                 , k
                                                 )
                             );
