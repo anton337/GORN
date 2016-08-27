@@ -11,7 +11,7 @@ export GORN_CONFIG="$ROOT_PATH/configs/"
 export GORN_CXX="g++ -std=c++11"
 
 #export GORN_CXX_FLAGS="-O3 -g0 -Wall"
-export GORN_CXX_FLAGS="-O0 -g3 -Wall"
+export GORN_CXX_FLAGS="-O0 -g3 -Wall -DDEBUG"
 
 echo "GORN_ROOT=$GORN_ROOT"
 echo "GORN_BIN=$GORN_BIN"

@@ -271,7 +271,7 @@ void connections_thread ()
                 }
                 if ( proceed )
                 {
-                    int n_connections = get_connections ( n -> host 
+                    int n_connections = get_connections_fake ( n -> host 
                                                         , n -> dir
                                                         , n
                                                         , Q
@@ -375,7 +375,7 @@ int main(int argc,char **argv)
         threads . push_back ( new boost::thread ( connections_thread ) );
     }
     threads . push_back ( new boost::thread ( save_list                    ) );
-    // threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
+    threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
     // threads . push_back ( new boost::thread ( save_map                     ) );
     for ( std::size_t k(0)
         ; k < threads . size ()

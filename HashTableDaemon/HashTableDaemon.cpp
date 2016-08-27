@@ -17,7 +17,7 @@ void wait(int seconds)
     sleep(seconds);//boost::this_thread::sleep_for(boost::chrono::seconds{seconds});
 }
 
-#define BUFFER_SIZE 10000
+#define BUFFER_SIZE -1
 
 host_info host;
 
@@ -367,15 +367,20 @@ void sigint(int a)
 
 int main(int argc,char * argv[])
 {
+
     srand(time(NULL));
     std::cout << "Welcome to HashTableDaemon!" << std::endl;
+
+    #ifdef DEBUG
+    std::cout << "[DEBUG MODE]" << "   " << "PID:" << getpid() << std::endl;;
+    #endif
+
     std::string config_file;
     if ( argc != 2 )
     {
         std::cout << "try ./HashTableDaemon <config_file>" << std::endl;
         return 1;
     }
-    signal(SIGINT,sigint);
     config_file = std::string(argv[1]);
     std::vector < boost::thread * > threads;
 
@@ -428,6 +433,7 @@ int main(int argc,char * argv[])
     threads . push_back ( new boost::thread ( find_write_output_thread ) );
 
     std::cout << "join" << std::endl;
+
     for ( std::size_t k(0)
         ; k < threads.size()
         ; ++k
