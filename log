@@ -1,0 +1,13 @@
+GORN_ROOT=/home/pi/GORN_git/GORN
+GORN_BIN=/home/pi/GORN_git/GORN/bin/
+GORN_DATA=/home/pi/GORN_git/GORN/data/
+GORN_UTILS=/home/pi/GORN_git/GORN/utils/
+GORN_CONFIG=/home/pi/GORN_git/GORN/configs/
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_status_check.cpp -o /home/pi/GORN_git/GORN/bin/test_status_check -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_system.cpp -o /home/pi/GORN_git/GORN/bin/test_system -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_sort.cpp -o /home/pi/GORN_git/GORN/bin/test_sort -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_crawler.cpp -o /home/pi/GORN_git/GORN/bin/test_crawler -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_serializer.cpp -o /home/pi/GORN_git/GORN/bin/test_serializer -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_queue.cpp -o /home/pi/GORN_git/GORN/bin/test_queue -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_find.cpp -o /home/pi/GORN_git/GORN/bin/test_find -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_url_transfer.cpp -o /home/pi/GORN_git/GORN/bin/test_url_transfer -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
