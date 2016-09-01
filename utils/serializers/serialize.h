@@ -3,10 +3,10 @@
 
 #include <sstream>
 
-#define         STORE_TYPE     1234589
-#define    FIND_REPLY_TYPE     9387534
-#define          FIND_TYPE     4389728
-#define SYSTEM_STATUS_TYPE     3892051
+#define             STORE_TYPE     1234589
+#define        FIND_REPLY_TYPE     9387534
+#define              FIND_TYPE     4389728
+#define     SYSTEM_STATUS_TYPE     3892051
 
 class Serialize
 {

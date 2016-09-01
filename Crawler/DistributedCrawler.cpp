@@ -350,6 +350,30 @@ void fetch_data_from_queue_thread ()
     }
 }
 
+void set_status_thread ()
+{
+    while ( true )
+    {
+        std::stringstream filename;
+        filename << "system_status/crawler/" << "crawler_info____" << server_host . host_name << "_" << server_host . port_no;
+        std::ofstream output_file;
+        output_file . open ( filename . str () . c_str () );
+        if ( output_file . is_open () )
+        {
+            output_file << "Q_size: " << Q -> size () << std::endl;
+            output_file << "Z_size: " << Z -> size () << std::endl;
+            output_file << "map_queue_size: " << map_queue -> size () << std::endl;
+            output_file << "M_size: " << M . size () << std::endl;
+            output_file . close ();
+        }
+        else
+        {
+            std::cout << "Unable to open file : " << filename . str () << std::endl;
+        }
+        sleep(1);
+    }
+}
+
 int main(int argc,char **argv)
 {
     srand(time(NULL));

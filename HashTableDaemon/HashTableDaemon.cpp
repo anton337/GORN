@@ -10,7 +10,10 @@
 #include "info.h"
 #include "serializers/store_message_serialize.h"
 #include "serializers/find_message_serialize.h"
+#include "serializers/system_status_serialize.h"
 #include "data/distributed_mutex.h"
+#include "system/get_tot_cpu_info.h"
+#include "system/memory.h"
 
 void wait(int seconds)
 {
@@ -135,6 +138,11 @@ void consumeItem ( Chunk * item )
                         find_output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
+                break;
+            }
+            case SYSTEM_STATUS_TYPE :
+            {
+                
                 break;
             }
             default :
@@ -366,6 +374,222 @@ void sigint(int a)
     exit(1);
 }
 
+void set_status_thread ()
+{
+    while ( true )
+    {
+        std::stringstream filename;
+        filename << "system_status/hash_table/" << "hash_table_info____" << host . host_name << "_" << host . port_no;
+        std::ofstream output_file;
+        output_file . open ( filename . str () . c_str () );
+        if ( output_file . is_open () )
+        {
+            output_file << "queue_size: " << Queue -> size () << std::endl;
+            for ( std::size_t k(0)
+                ; k < 4
+                ; ++k
+                )
+            {
+                output_file << "sorting_queue_size" << k << ": " << sorting_queue[k] -> size () << std::endl;
+            }
+            for ( std::size_t k(0)
+                ; k < 4
+                ; ++k
+                )
+            {
+                output_file << "find_sorting_queue_size" << k << ": " << find_sorting_queue[k] -> size () << std::endl;
+            }
+            {
+                output_file << "output_queue_size" << ": " << output_queue -> size () << std::endl;
+            }
+            {
+                output_file << "find_output_queue_size" << ": " << find_output_queue -> size () << std::endl;
+            }
+            output_file . close ();
+        }
+        else
+        {
+            std::cout << "Unable to open file : " << filename . str () << std::endl;
+        }
+        sleep(1);
+    }
+}
+
+InfoPackage construct_status_message ()
+{
+    InfoPackage info;
+
+    // get crawler info
+    {
+        std::vector < std::string > crawler_files;
+        get_files ( "system_status/crawler/" , crawler_files );
+        for ( std::size_t k (0)
+            ; k < crawler_files . size ()
+            ; ++k
+            )
+        {
+            CrawlerInfo crawler_info;
+            std::string line;
+            std::ifstream file ( crawler_files[k] );
+            if ( file . is_open () )
+            {
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    crawler_info . Q_size = queue_size;
+                }
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    crawler_info . Z_size = queue_size;
+                }
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    crawler_info . map_queue_size = queue_size;
+                }
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    crawler_info . M_size = queue_size;
+                }
+                info . m_crawler_info . push_back ( crawler_info );
+            }
+            else
+            {
+                std::cout << "Unable to open file : " << crawler_files[k] << std::endl;
+            }
+        }
+    }
+
+    // get hash table info
+    {
+        std::vector < std::string > hash_table_files;
+        get_files ( "system_status/hash_table/" , hash_table_files );
+        for ( std::size_t k (0)
+            ; k < hash_table_files . size ()
+            ; ++k
+            )
+        {
+            HashTableInfo hash_table_info;
+            std::string line;
+            std::ifstream file ( hash_table_files[k] );
+            if ( file . is_open () )
+            {
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    hash_table_info . queue_size = queue_size;
+                }
+                for ( std::size_t i(0)
+                    ; i < 4
+                    ; ++i
+                    )
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    hash_table_info . sorting_queue_size . push_back ( queue_size );
+                }
+                for ( std::size_t i(0)
+                    ; i < 4
+                    ; ++i
+                    )
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    hash_table_info . find_sorting_queue_size . push_back ( queue_size );
+                }
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    hash_table_info . output_queue_size . push_back ( queue_size );
+                }
+                {
+                    getline ( file , line );
+                    float queue_size;
+                    std::string label;
+                    std::stringstream ss;
+                    ss << line;
+                    ss >> label;
+                    ss >> queue_size;
+                    hash_table_info . find_output_queue_size . push_back ( queue_size );
+                }
+                info . m_hash_table_info . push_back ( hash_table_info );
+            }
+            else
+            {
+                std::cout << "Unable to open file : " << hash_table_files[k] << std::endl;
+            }
+        }
+    }
+
+    // get system info
+    {
+        double percent[5];
+        memoryInfo c_memoryInfo;
+        getCurrentValue(percent);
+        std::size_t mem_total;
+        std::size_t mem_used;
+        std::size_t mem_cache;
+        std::size_t mem_buffers;
+        c_memoryInfo . get_memory_info ( mem_total 
+                                       , mem_used
+                                       , mem_cache
+                                       , mem_buffers
+                                       );
+        for ( std::size_t k(1)
+            ; k < 5
+            ; ++k
+            )
+        {
+            info . m_system_info . p_cpu_percent . push_back ( percent[k] );
+        }
+        info . m_system_info . p_memory_percent = 100 * (float)mem_used / (float)mem_total;
+    }
+
+    return info;
+}
+
 int main(int argc,char * argv[])
 {
 
@@ -382,6 +606,9 @@ int main(int argc,char * argv[])
         std::cout << "try ./HashTableDaemon <config_file>" << std::endl;
         return 1;
     }
+
+    init();
+
     config_file = std::string(argv[1]);
     std::vector < boost::thread * > threads;
 
