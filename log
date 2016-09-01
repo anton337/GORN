@@ -1,13 +1,52 @@
-GORN_ROOT=/home/pi/GORN_git/GORN
-GORN_BIN=/home/pi/GORN_git/GORN/bin/
-GORN_DATA=/home/pi/GORN_git/GORN/data/
-GORN_UTILS=/home/pi/GORN_git/GORN/utils/
-GORN_CONFIG=/home/pi/GORN_git/GORN/configs/
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_status_check.cpp -o /home/pi/GORN_git/GORN/bin/test_status_check -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_system.cpp -o /home/pi/GORN_git/GORN/bin/test_system -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_sort.cpp -o /home/pi/GORN_git/GORN/bin/test_sort -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_crawler.cpp -o /home/pi/GORN_git/GORN/bin/test_crawler -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_serializer.cpp -o /home/pi/GORN_git/GORN/bin/test_serializer -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_queue.cpp -o /home/pi/GORN_git/GORN/bin/test_queue -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG test_find.cpp -o /home/pi/GORN_git/GORN/bin/test_find -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
-g++ -std=c++11 -O0 -g3 -Wall -DDEBUG -Wno-unused-variable test_url_transfer.cpp -o /home/pi/GORN_git/GORN/bin/test_url_transfer -I/home/pi/GORN_git/GORN/utils/ -lboost_system -lboost_thread -lboost_filesystem -lpthread;
+Running Unit Tests ...
+pass 1
+pass 2
+pass 3
+1234589 4 20 30 40 50 53 2 23000 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 23000 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 4 12345 123456 1.23457e+06 1.23457e+07 2 3456 34567 345678 3.45679e+06 3456 34567 345678 3.45679e+06 21201 
+system info pass 1
+system info pass 2
+hash table info pass 1
+queue size : 23000
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+hash table info pass 2
+hash table info pass 1
+queue size : 23000
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+0  12345
+1  123456
+2  1234570
+3  12345700
+hash table info pass 2
+crawler info pass 1
+crawler info pass 2
+crawler info pass 1
+crawler info pass 2
+check sums do not match!
+pass 4
+System Status Unit test : PASSED!

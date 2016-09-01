@@ -2,6 +2,7 @@
 
 source env/set_env.bash
 
+cd StatusViewer; make; cd ..
 cd unit_tests; make; cd ..
 cd DataGenerator; make; cd ..
 cd ConfigGenerator; make; cd ..

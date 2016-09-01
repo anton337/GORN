@@ -27,17 +27,21 @@ void deserialize_t ( std::stringstream & ss
                    , std::vector < T > & vec
                    )
 {
-    std::size_t num;
+    double num;
     ss >> num;
+    ss_check_sum << num << " ";
+    std::size_t c_num(num);
     vec . clear ();
     for ( std::size_t k(0)
-        ; k < num
+        ; k < c_num
         ; ++k
         )
     {
-        T val;
+        double val;
         ss >> val;
-        vec . push_back ( val );
+        ss_check_sum << val << " ";
+        T c_val ( val );
+        vec . push_back ( c_val );
     }
 }
 
@@ -56,6 +60,7 @@ struct SystemInfo
     {
         deserialize_t ( ss , ss_check_sum , p_cpu_percent );
         ss >> p_memory_percent;
+        ss_check_sum << p_memory_percent << " ";
     }
 };
 
@@ -78,7 +83,10 @@ struct HashTableInfo
                      , std::stringstream & ss_check_sum
                      )
     {
-        ss >> queue_size;
+        double t_queue_size;
+        ss >> t_queue_size;
+        ss_check_sum << t_queue_size << " ";
+        queue_size = std::size_t(t_queue_size);
         deserialize_t ( ss , ss_check_sum ,      sorting_queue_size );
         deserialize_t ( ss , ss_check_sum , find_sorting_queue_size );
         deserialize_t ( ss , ss_check_sum ,       output_queue_size );
@@ -103,10 +111,19 @@ struct CrawlerInfo
                      , std::stringstream & ss_check_sum 
                      )
     {
-        ss >> Q_size;
-        ss >> Z_size;
-        ss >> map_queue_size;
-        ss >> M_size;
+        double t_Q_size, t_Z_size, t_map_queue_size, t_M_size;
+        ss >> t_Q_size;
+        ss_check_sum << t_Q_size << " ";
+        Q_size = std::size_t(t_Q_size);
+        ss >> t_Z_size;
+        ss_check_sum << t_Z_size << " ";
+        Z_size = std::size_t(t_Z_size);
+        ss >> t_map_queue_size;
+        ss_check_sum << t_map_queue_size << " ";
+        map_queue_size = std::size_t(t_map_queue_size);
+        ss >> t_M_size;
+        ss_check_sum << t_M_size << " ";
+        M_size = std::size_t(t_M_size);
     }
 };
 
@@ -147,8 +164,10 @@ struct InfoPackage
                      )
     {
         m_system_info . deserialize ( ss , ss_check_sum );
-        std::size_t num_hash_table;
-        ss >> num_hash_table;
+        double t_num_hash_table;
+        ss >> t_num_hash_table;
+        ss_check_sum << t_num_hash_table << " ";
+        std::size_t num_hash_table ( t_num_hash_table );
         m_hash_table_info . clear ();
         for ( std::size_t k(0)
             ; k < num_hash_table
@@ -158,8 +177,10 @@ struct InfoPackage
             m_hash_table_info . push_back ( HashTableInfo () );
             m_hash_table_info[k] . deserialize ( ss , ss_check_sum );
         }
-        std::size_t num_crawler;
-        ss >> num_crawler;
+        double t_num_crawler;
+        ss >> t_num_crawler;
+        ss_check_sum << t_num_crawler << " ";
+        std::size_t num_crawler ( t_num_crawler );
         m_crawler_info . clear ();
         for ( std::size_t k(0)
             ; k < num_crawler
