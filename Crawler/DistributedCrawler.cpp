@@ -318,7 +318,7 @@ void fetch_data_from_queue_thread ()
                 {
                     std::string str = vec[k] . value;
                     std::cout << "fetching item : " << vec[k] . value << std::endl;
-                    std::size_t host_start = str . find ( "/" , 0          ) + 2;
+                    std::size_t host_start = 0;
                     std::size_t host_end   = str . find ( "/" , host_start );
                     if ( host_start != std::string::npos
                        )
@@ -328,6 +328,7 @@ void fetch_data_from_queue_thread ()
                         {
                             std::string host = str . substr ( host_start , host_end - host_start );
                             std::string dir  = str . substr ( host_end+1 );
+                            std::cout << "host : " << host << " dir : " << dir << std::endl;
                             {
                                 Q -> put ( new node ( host , "/"+dir ) );
                             }
@@ -335,6 +336,7 @@ void fetch_data_from_queue_thread ()
                         else
                         {
                             std::string host = str . substr ( host_start , host_end - host_start );
+                            std::cout << "host : " << std::endl;
                             {
                                 Q -> put ( new node ( host , "/" ) );
                             }
@@ -370,7 +372,7 @@ void set_status_thread ()
         {
             std::cout << "Unable to open file : " << filename . str () << std::endl;
         }
-        sleep(1);
+        usleep(1000000);
     }
 }
 
@@ -379,12 +381,14 @@ int main(int argc,char **argv)
     srand(time(NULL));
     std::cout << "Welcome to Crawler!" << std::endl;
     std::string config_file;
-    if ( argc != 2 )
+    std::string seed_name;
+    if ( argc != 3 )
     {
-        std::cout << "try ./ClientInterface <config_file>" << std::endl;
+        std::cout << "try ./ClientInterface <config_file> <seed_name>" << std::endl;
         return 1;
     }
     config_file = std::string(argv[1]);
+    seed_name = std::string(argv[2]);
 
     std::vector < connection_info > connections;
     parse_config_file ( config_file 
@@ -395,14 +399,11 @@ int main(int argc,char **argv)
     std::cout << "host name : " << server_host . host_name << std::endl;
     std::cout << "port no : " << server_host . port_no << std::endl;
 
-    Q -> put ( new node ( "www.ask.com" , "/" ) );
-    Q -> put ( new node ( "www.google.com" , "/" ) );
-    Q -> put ( new node ( "www.facebook.com" , "/" ) );
-    Q -> put ( new node ( "www.youtube.com" , "/" ) );
-    Q -> put ( new node ( "www.bing.com" , "/" ) );
+    Q -> put ( new node ( seed_name , "/" ) );
+
     std::vector < boost::thread * > threads;
     for ( std::size_t k(0)
-        ; k < 4
+        ; k < 40
         ; ++k
         )
     {
@@ -411,6 +412,7 @@ int main(int argc,char **argv)
     threads . push_back ( new boost::thread ( save_list                    ) );
     threads . push_back ( new boost::thread ( fetch_data_from_queue_thread ) );
     threads . push_back ( new boost::thread ( save_map                     ) );
+    threads . push_back ( new boost::thread ( set_status_thread            ) );
     for ( std::size_t k(0)
         ; k < threads . size ()
         ; ++k

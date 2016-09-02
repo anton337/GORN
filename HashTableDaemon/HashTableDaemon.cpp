@@ -414,14 +414,14 @@ void set_status_thread ()
         {
             output_file << "queue_size: " << Queue -> size () << std::endl;
             for ( std::size_t k(0)
-                ; k < 4
+                ; k < connections . size ( )
                 ; ++k
                 )
             {
                 output_file << "sorting_queue_size" << k << ": " << sorting_queue[k] -> size () << std::endl;
             }
             for ( std::size_t k(0)
-                ; k < 4
+                ; k < connections . size ( )
                 ; ++k
                 )
             {
@@ -439,7 +439,7 @@ void set_status_thread ()
         {
             std::cout << "Unable to open file : " << filename . str () << std::endl;
         }
-        sleep(1);
+        usleep(1000000);
     }
 }
 
@@ -692,6 +692,8 @@ int main(int argc,char * argv[])
     }
 
     threads . push_back ( new boost::thread ( find_write_output_thread ) );
+
+    threads . push_back ( new boost::thread ( set_status_thread ) );
 
     std::cout << "join" << std::endl;
 
