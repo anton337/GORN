@@ -74,6 +74,7 @@ std::size_t find_chord_connection ( std::size_t index )
     return ret;
 }
 
+InfoPackage construct_status_message ();
 
 void consumeItem ( Chunk * item )
 {
@@ -142,7 +143,34 @@ void consumeItem ( Chunk * item )
             }
             case SYSTEM_STATUS_TYPE :
             {
-                
+                std::cout << "Receiving system status report ... " << std::endl;
+                SystemStatusMessage < InfoPackage > report;
+                if ( report . deserialize ( item -> message ) != 0 )
+                {
+                    std::cout << "failed to deserialize status message " << std::endl;
+                    break;
+                }
+                std::cout << "Status Report : " << item -> message << std::endl;
+                break;
+            }
+            case GET_SYSTEM_STATUS_TYPE :
+            {
+                std::cout << "Get system status request ... " << std::endl;
+                InfoPackage status ( construct_status_message () );
+                std::stringstream ss;
+                ss << item -> message;
+                std::string type;
+                ss >> type;
+                std::string host;
+                ss >> host;
+                std::string port_s;
+                ss >> port_s;
+                boost::asio::io_service svc;
+                Client client ( svc, host, port_s );
+                SystemStatusMessage < InfoPackage > message;
+                message . set_data ( status );
+                client . send ( message . serialize ( 0 , 0 ) );
+                std::cout << "sending status ... " << std::endl;
                 break;
             }
             default :

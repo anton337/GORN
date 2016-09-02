@@ -337,14 +337,6 @@ void keyboard ( unsigned char key
 
 void init(void)
 {
-  // GLdouble light_diffuse[] = {1.0, 1.0, 1.0, 1.0};  /* Red diffuse light. */
-  // GLdouble light_position[] = {1.0, 1.0, 1.0, 0.0};  /* Infinite light location. */
-  /* Enable a single OpenGL light. */
-  // glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  // glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-  // glEnable(GL_LIGHT0);
-  // glEnable(GL_LIGHTING);
-  /* Use depth buffering for hidden surface elimination. */
   glEnable(GL_DEPTH_TEST);
   /* Setup the view of the cube. */
   glMatrixMode(GL_PROJECTION);
@@ -355,10 +347,6 @@ void init(void)
   gluLookAt(0.0, 0.0, 3,  /* eye is at (0,0,5) */
     0.0, 0.0, 0.0,      /* center is at (0,0,0) */
     0.0, 1.0, 0.);      /* up is in positive Y direction */
-  /* Adjust cube position to be asthetic angle. */
-  // glTranslatef(0.0, 0.0, -1.0);
-  // glRotatef(60, 1.0, 0.0, 0.0);
-  // glRotatef(-20, 0.0, 0.0, 1.0);
 }
 
 int main(int argc,char **argv)

@@ -279,7 +279,7 @@ public:
 
     std::size_t get_type ()
     {
-        return STORE_TYPE;
+        return SYSTEM_STATUS_TYPE;
     }
 
 };

@@ -7,6 +7,7 @@
 #define        FIND_REPLY_TYPE     9387534
 #define              FIND_TYPE     4389728
 #define     SYSTEM_STATUS_TYPE     3892051
+#define GET_SYSTEM_STATUS_TYPE     2398475
 
 class Serialize
 {

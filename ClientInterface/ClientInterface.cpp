@@ -106,6 +106,17 @@ void find_data_thread ( std::string host
     client . send ( message . serialize ( 0 , vec . size () ) );
 }
 
+void request_status_thread ( std::string host 
+                           , std::size_t port 
+                           ) 
+{
+    boost::asio::io_service svc;
+    Client client(svc, host, std::to_string(port));
+    std::stringstream get_status;
+    get_status << GET_SYSTEM_STATUS_TYPE << " " << host << " " << port;
+    client.send ( get_status . str () );
+}
+
 int main ( int argc
          , char * argv[]
          )
@@ -193,6 +204,16 @@ int main ( int argc
                             , host.host_name
                             , host.port_no
                             , what
+                            );
+        }
+        if ( command == "status" )
+        {
+            std::string what;
+            ss >> what;
+            std::cout << "Request Status ... " << std::endl;
+            boost::thread t ( request_status_thread
+                            , host.host_name
+                            , host.port_no
                             );
         }
 
