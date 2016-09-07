@@ -2,6 +2,18 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include "data/data.h"
+#include "data/distributed_mutex.h"
+
+std::string   non_unique_file_directory = "queue_data_non_unique/" ;
+
+std::string       unique_file_directory = "sorted_output/"         ;
+
+std::string            output_directory = "queue_data/"            ;
+
+DistributedMutex c_mutex ( "unlocked"
+                         , "locked"
+                         );
 
 bool verify_uniqueness ( std::vector < std::vector < std::string > > & vec )
 {
@@ -131,76 +143,124 @@ void remove_non_unique ( std::vector < std::vector < std::string > > const & uni
     vec . clear ();
 }
 
+void obtain_non_unique_data ( std::string non_unique_file_directory 
+                            , std::vector < std::vector < std::string > > & non_unique_data
+                            )
+{
+    std::vector < std::string > files;
+    get_files ( non_unique_file_directory
+              , files
+              );
+    std::size_t n_non_unique = files . size ();
+    for ( std::size_t k(0)
+        ; k < n_non_unique
+        ; ++k
+        )
+    {
+        std::vector < std::string > vec;
+        read_file ( files[k] , vec );
+        non_unique_data . push_back ( vec );
+        remove_file ( files[k] );
+    }
+    std::cout << "Non Unique : " << verify_uniqueness ( non_unique_data ) << std::endl;
+}
+
+void obtain_unique_data ( std::string unique_file_directory 
+                        , std::vector < std::vector < std::string > > & unique_data
+                        )
+{
+    std::vector < std::string > files;
+    get_files ( unique_file_directory
+              , files
+              );
+    std::size_t n_non_unique = files . size ();
+    for ( std::size_t k(0)
+        ; k < n_non_unique
+        ; ++k
+        )
+    {
+        std::vector < std::string > vec;
+        read_file ( files[k] , vec );
+        unique_data . push_back ( vec );
+    }
+    enforce_uniqueness ( unique_data );
+    std::cout << "Unique : " << verify_uniqueness ( unique_data ) << std::endl;
+}
+
+void filter_out_non_unique_values ( std::vector < std::vector < std::string > > & unique_data
+                                  , std::vector < std::vector < std::string > > & non_unique_data
+                                  , std::vector < std::vector < std::string > > & output_data
+                                  , std::string output_directory
+                                  , std::size_t file_size = 1000 
+                                  )
+{
+    std::size_t n_numbers = file_size;
+    remove_non_unique ( unique_data
+                      , non_unique_data
+                      , output_data
+                      , n_numbers
+                      );
+    std::cout << "Output : " << output_data . size () << "  " << output_data[output_data.size()-1] . size () << "  " << verify_uniqueness ( output_data ) << std::endl;
+    for ( std::size_t k(0)
+        ; k < output_data . size ()
+        ; ++k
+        )
+    {
+        std::stringstream file_name;
+        file_name << output_directory << "/" << "unique_data_" << rand() << ".que";
+        write_file ( file_name . str ()
+                   , output_data[k]
+                   , '\n'
+                   );
+    }
+}
 
 int main()
 {
     srand(time(0));
     std::cout << "Welcome to DistributedQueue!" << std::endl;
 
-    std::vector < std::vector < std::string > > non_unique_data;
-
-    std::vector < std::vector < std::string > > unique_data;
-
-    std::vector < std::vector < std::string > > output_data;
-
-    // obtain non_unique_data
+    while ( 1 )
     {
-        std::size_t n_non_unique = 1000;
-        std::size_t n_numbers = 1000;
-        for ( std::size_t k(0)
-            ; k < n_non_unique
-            ; ++k
-            )
+
+        sleep(5);
+
+        if ( c_mutex . Lock () == 1 ) continue;
+
+        std::vector < std::vector < std::string > > non_unique_data;
+
+        std::vector < std::vector < std::string > > unique_data;
+
+        std::vector < std::vector < std::string > > output_data;
+
+        // obtain non_unique_data
         {
-            std::vector < std::string > vec(n_numbers);
-            for ( std::size_t i(0)
-                ; i < n_numbers
-                ; ++i
-                )
-            {
-                std::stringstream ss;
-                ss << rand();
-                vec[i] = ss.str();
-            }
-            non_unique_data . push_back ( vec );
+            obtain_non_unique_data ( non_unique_file_directory 
+                                   , non_unique_data
+                                   );
         }
-        std::cout << "Non Unique : " << verify_uniqueness ( non_unique_data ) << std::endl;
-    }
 
-    // obtain unique_data
-    {
-        std::size_t n_non_unique = 1000;
-        std::size_t n_numbers = 1000;
-        for ( std::size_t k(0)
-            ; k < n_non_unique
-            ; ++k
-            )
+        // obtain unique_data
         {
-            std::vector < std::string > vec(n_numbers);
-            for ( std::size_t i(0)
-                ; i < n_numbers
-                ; ++i
-                )
-            {
-                std::stringstream ss;
-                ss << rand();
-                vec[i] = ss.str();
-            }
-            unique_data . push_back ( vec );
+            obtain_unique_data ( unique_file_directory 
+                               , unique_data
+                               );
+            obtain_unique_data ( non_unique_file_directory
+                               , unique_data
+                               );
         }
-        enforce_uniqueness ( unique_data );
-        std::cout << "Unique : " << verify_uniqueness ( unique_data ) << std::endl;
-    }
 
-    // filter out non unique values
-    {
-        std::size_t n_numbers = 1000;
-        remove_non_unique ( unique_data
-                          , non_unique_data
-                          , output_data
-                          , n_numbers
-                          );
-        std::cout << "Output : " << output_data . size () << "  " << output_data[output_data.size()-1] . size () << "  " << verify_uniqueness ( output_data ) << std::endl;
+        // filter out non unique values
+        {
+            filter_out_non_unique_values ( unique_data
+                                         , non_unique_data
+                                         , output_data
+                                         , output_directory
+                                         );
+        }
+
+        c_mutex . Unlock ();
+
     }
 
     return 0;

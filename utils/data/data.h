@@ -38,6 +38,7 @@ void sort_data ( std::vector < std::string > & input
 
 void write_file ( std::string                         file_name
                 , std::vector < std::string > const & input
+                , const char                          delimiter = ' '
                 )
 {
     std::ofstream myfile (file_name.c_str());
@@ -48,7 +49,7 @@ void write_file ( std::string                         file_name
             ; ++k
             )
         {
-            myfile << input[k] << " ";
+            myfile << input[k] << delimiter;
         }
         myfile.close();
     } 

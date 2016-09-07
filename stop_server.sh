@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PID=`pidof DataSorterDaemon`
-kill -9 $PID
+PID_dsd=`pidof DataSorterDaemon`
+kill -9 $PID_dsd
+PID_dq=`pidof DistributedQueue`
+kill -9 $PID_dq
 pkill HashTableDaemon
 

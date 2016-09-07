@@ -6,12 +6,15 @@
 #include "asio/client.h"
 #include "multithreading/producer_consumer_queue.h"
 #include "data/queue_file.h"
+#include "data/data.h"
 #include "hash/hash.h"
 #include "info.h"
 #include "serializers/store_message_serialize.h"
 #include "serializers/find_message_serialize.h"
 
 host_info server_host;
+
+std::vector < std::string > black_list;
 
 struct node
 {
@@ -39,6 +42,24 @@ boost::mutex * _mutex = new boost::mutex ();
 std::set < node * , NodeComparator > M;
 ProducerConsumerQueue < node > * Q = new ProducerConsumerQueue < node > ( -1 );
 ProducerConsumerQueue < node > * Z = new ProducerConsumerQueue < node > ( -1 );
+
+bool worker_node = true;
+
+bool check_black_list ( std::string p_host )
+{
+    for ( std::size_t k(0)
+        ; k < black_list . size ()
+        ; ++k
+        )
+    {
+        // if ( strcmp ( p_host . c_str () , black_list[k] . c_str () ) == 0 ) // - exact match
+        if ( p_host . find ( black_list[k] . c_str () ) != std::string::npos ) // - substring
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 int  get_connections ( std::string host
                      , std::string dir
@@ -72,9 +93,11 @@ int  get_connections ( std::string host
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
                     std::string dir  = str . substr ( host_end+1 );
+                    if ( host . length () > 0 )
+                    if ( check_black_list ( host ) )
                     if ( hash . validate ( host + "/"+dir ) )
                     {
-                        if ( Q -> size () < 1000 )
+                        if ( Q -> size () < 1000 && !worker_node )
                         {
                             Q -> put ( new node ( host , "/"+dir ) );
                         }
@@ -87,9 +110,11 @@ int  get_connections ( std::string host
                 else
                 {
                     std::string host = str . substr ( host_start , host_end - host_start );
+                    if ( host . length () > 0 )
+                    if ( check_black_list ( host ) )
                     if ( hash . validate ( host ) )
                     {
-                        if ( Q -> size () < 1000 )
+                        if ( Q -> size () < 1000 && !worker_node )
                         {
                             Q -> put ( new node ( host , "/" ) );
                         }
@@ -257,7 +282,11 @@ void connections_thread ()
     {
         try 
         {
+            usleep(100000);
+            // std::cout << "Q size : " << Q -> size () << std::endl;
             node * n = Q -> get ();
+            if ( n -> host . length () > 0 )
+            if ( check_black_list ( n -> host ) )
             if ( hash . validate ( n -> host + n -> dir ) )
             {
                 bool proceed = false;
@@ -284,7 +313,7 @@ void connections_thread ()
                                                         , Z
                                                         );
                     std::cout << "n_connections : " << n_connections << std::endl;
-                    if ( n_connections > 0 )
+                    // if ( n_connections > 0 )
                     {
                         map_queue -> put ( n );
                     }
@@ -301,16 +330,25 @@ void connections_thread ()
 
 QueueFile < QueueEntryValue > queue_file ( "queue_data/" );
 
+void load_black_list()
+{
+    black_list . clear ();
+    read_file ( "blacklist/blacklist" , black_list );
+}
+
 void fetch_data_from_queue_thread ()
 {
     while ( true )
     {
+        sleep(2);
         try 
         {
-            if ( Q -> size () < 200 )
+            load_black_list ();
+            if ( Q -> size () < 500 )
             {
                 std::vector < QueueEntryValue > vec;
                 queue_file . Pop ( vec );
+                std::cout << "vec size : " << vec . size () << std::endl;
                 for ( std::size_t k(0)
                     ; k < vec . size ()
                     ; ++k
@@ -343,6 +381,7 @@ void fetch_data_from_queue_thread ()
                         }
                     }
                 }
+                // std::cout << "Q size : " << Q -> size () << std::endl;
             }
         }
         catch ( std::exception & e )
@@ -382,13 +421,20 @@ int main(int argc,char **argv)
     std::cout << "Welcome to Crawler!" << std::endl;
     std::string config_file;
     std::string seed_name;
-    if ( argc != 3 )
+    if ( argc != 4 )
     {
-        std::cout << "try ./ClientInterface <config_file> <seed_name>" << std::endl;
+        std::cout << "try ./DistributedCrawler <config_file> <seed_name>" << std::endl;
         return 1;
     }
+
+    load_black_list();
+
     config_file = std::string(argv[1]);
     seed_name = std::string(argv[2]);
+    if ( argv[3][0] == 'a' )
+    {
+        worker_node = false;
+    }
 
     std::vector < connection_info > connections;
     parse_config_file ( config_file 

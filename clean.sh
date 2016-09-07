@@ -9,4 +9,6 @@ touch sorted_output/comprehensive.out
 touch sorted_output/unlocked
 rm -f queue_data/*
 touch queue_data/DUMMY
+rm -f queue_data_non_unique/*
+touch queue_data_non_unique/DUMMY
 

@@ -96,17 +96,17 @@ void consumeItem ( Chunk * item )
                     ; ++i
                     )
                 {
-                    std::size_t k = atoi ( data[i] . c_str () );
+                    std::size_t k = (data[i].length() > 0)?(std::size_t)(data[i][0]):0;
                     std::size_t index = k % 4; // num_sorting_queue;
                     if ( index != node_index )
                     {
-                        std::cout << "index : " << index << std::endl;
+                        // std::cout << "index : " << index << std::endl;
                         std::size_t queue_index = find_chord_connection ( index );
                         (sorting_queue [queue_index]) -> put ( new Chunk ( data[i] ) );
                     }
                     else
                     {
-                        std::cout << "store : " << host.port_no << " - " << index << " : " << ++num_received <<  " : " << data[i] << std::endl;
+                        // std::cout << "store : " << host.port_no << " - " << index << " : " << ++num_received <<  " : " << data[i] << std::endl;
                         output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
@@ -126,7 +126,8 @@ void consumeItem ( Chunk * item )
                     ; ++i
                     )
                 {
-                    std::size_t k = atoi ( data[i] . c_str () );
+                    std::size_t k = (data[i].length() > 0)?(std::size_t)(data[i][0]):0;
+                    // std::cout << "k=" << k << "  " << data[i] << std::endl;
                     std::size_t index = k % 4; // num_sorting_queue;
                     if ( index != node_index )
                     {
@@ -135,7 +136,7 @@ void consumeItem ( Chunk * item )
                     }
                     else
                     {
-                        std::cout << "find : " << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
+                        // std::cout << "find : " << host.port_no << " - " << ++num_received <<  " : " << data[i] << std::endl;
                         find_output_queue -> put ( new Chunk ( data[i] ) );
                     }
                 }
@@ -143,19 +144,19 @@ void consumeItem ( Chunk * item )
             }
             case SYSTEM_STATUS_TYPE :
             {
-                std::cout << "Receiving system status report ... " << std::endl;
+                // std::cout << "Receiving system status report ... " << std::endl;
                 SystemStatusMessage < InfoPackage > report;
                 if ( report . deserialize ( item -> message ) != 0 )
                 {
                     std::cout << "failed to deserialize status message " << std::endl;
                     break;
                 }
-                std::cout << "Status Report : " << item -> message << std::endl;
+                // std::cout << "Status Report : " << item -> message << std::endl;
                 break;
             }
             case GET_SYSTEM_STATUS_TYPE :
             {
-                std::cout << "Get system status request ... " << std::endl;
+                // std::cout << "Get system status request ... " << std::endl;
                 InfoPackage status ( construct_status_message () );
                 std::stringstream ss;
                 ss << item -> message;
@@ -170,7 +171,7 @@ void consumeItem ( Chunk * item )
                 SystemStatusMessage < InfoPackage > message;
                 message . set_data ( status );
                 client . send ( message . serialize ( 0 , 0 ) );
-                std::cout << "sending status ... " << std::endl;
+                // std::cout << "sending status ... " << std::endl;
                 break;
             }
             default :
@@ -183,8 +184,8 @@ void consumeItem ( Chunk * item )
     }
 }
 
-DistributedMutex c_mutex ( "sorted_output/unlocked"
-                         , "sorted_output/locked"
+DistributedMutex c_mutex ( "unlocked"
+                         , "locked"
                          );
 
 void find_write_output_thread()
@@ -200,7 +201,7 @@ void find_write_output_thread()
         }
         delete item;
         item = NULL;
-        if ( Q . size () > 100 /*100000*/ )
+        if ( Q . size () > 1000 /*100000*/ )
         {
             if ( c_mutex . Lock () == 1 ) continue;
             std::cout << "writing to file : " << host . port_no << std::endl;
@@ -208,7 +209,7 @@ void find_write_output_thread()
             std::stringstream map_ss;
             map_ss << "sorted_output/" << "comprehensive.out";
             std::stringstream output_ss;
-            output_ss << "queue_data/" << "queue_" << host . port_no << "_" << batch_num << ".que";
+            output_ss << "queue_data_non_unique/" << "queue_" << host . port_no << "_" << batch_num << ".que";
             search_new ( map_ss . str () 
                        , Q 
                        , output_ss . str () 
@@ -231,7 +232,7 @@ void write_output_thread()
         {
             Q . push_back ( item -> message );
         }
-        if ( Q . size () > 100 /*100000*/ )
+        if ( Q . size () > 1000 /*100000*/ )
         {
             std::cout << "writing to file : " << host . port_no << std::endl;
             sort_data ( Q );
@@ -353,7 +354,7 @@ void find_consumer_redirection_thread(int queue_index)
     {
         Chunk * item = ((find_sorting_queue [queue_index])) -> get ();
         Q . push_back ( item -> message );
-        if ( Q . size () > 10000 )
+        if ( Q . size () > 1000/*10000*/ )
         {
             boost::thread redirection ( find_redirection_thread
                                       , connections[queue_index].host_name
@@ -374,7 +375,7 @@ void consumer_redirection_thread(int queue_index)
     {
         Chunk * item = ((sorting_queue [queue_index])) -> get ();
         Q . push_back ( item -> message );
-        if ( Q . size () > 10000 )
+        if ( Q . size () > 1000/*10000*/ )
         {
             boost::thread redirection ( redirection_thread
                                       , connections[queue_index].host_name

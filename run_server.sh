@@ -10,3 +10,5 @@ done
 
 ${GORN_BIN}DataSorterDaemon &
 
+${GORN_BIN}DistributedQueue &
+
